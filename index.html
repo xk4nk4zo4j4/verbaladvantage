@@ -1,0 +1,1944 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BARSKY PROTOCOL — Vocabulary Intelligence</title>
+<link href="https://fonts.googleapis.com/css2?family=Special+Elite&family=Courier+Prime:ital,wght@0,400;0,700;1,400&family=Oswald:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0f0a;
+    --bg2: #0f150f;
+    --bg3: #141c14;
+    --green: #2a4a2a;
+    --green-dim: #1a301a;
+    --gold: #c8a84b;
+    --gold-light: #e8c870;
+    --gold-dim: #7a6330;
+    --red: #8b2020;
+    --red-light: #c84040;
+    --cream: #e8e0c8;
+    --cream-dim: #b0a888;
+    --ink: #1a1a0a;
+    --box1: #c84040;
+    --box2: #c87820;
+    --box3: #c8c020;
+    --box4: #40a840;
+    --box5: #4080c8;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--cream);
+    font-family: 'Courier Prime', monospace;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Scanline overlay */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0,0,0,0.08) 2px,
+      rgba(0,0,0,0.08) 4px
+    );
+    pointer-events: none;
+    z-index: 1000;
+  }
+
+  /* Noise texture */
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    opacity: 0.03;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 999;
+  }
+
+  /* HEADER */
+  header {
+    border-bottom: 1px solid var(--gold-dim);
+    padding: 20px 30px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: linear-gradient(180deg, #0c130c 0%, var(--bg) 100%);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  .logo-block {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .logo-main {
+    font-family: 'Oswald', sans-serif;
+    font-weight: 600;
+    font-size: 22px;
+    letter-spacing: 6px;
+    color: var(--gold);
+    text-transform: uppercase;
+  }
+
+  .logo-sub {
+    font-size: 10px;
+    letter-spacing: 3px;
+    color: var(--gold-dim);
+    text-transform: uppercase;
+  }
+
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+  }
+
+  .date-stamp {
+    font-size: 11px;
+    color: var(--cream-dim);
+    letter-spacing: 2px;
+    text-align: right;
+  }
+
+  .day-badge {
+    background: var(--gold);
+    color: var(--ink);
+    font-family: 'Oswald', sans-serif;
+    font-weight: 600;
+    font-size: 11px;
+    letter-spacing: 2px;
+    padding: 4px 10px;
+    text-transform: uppercase;
+  }
+
+  /* MAIN LAYOUT */
+  main {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 30px 20px 80px;
+  }
+
+  /* SCREENS */
+  .screen { display: none; }
+  .screen.active { display: block; }
+
+  /* MISSION BRIEFING (Home) */
+  .mission-header {
+    border: 1px solid var(--gold-dim);
+    padding: 24px 28px;
+    margin-bottom: 24px;
+    position: relative;
+    background: linear-gradient(135deg, var(--bg2), var(--bg3));
+  }
+
+  .mission-header::before {
+    content: '▶ MISSION BRIEFING';
+    position: absolute;
+    top: -9px;
+    left: 20px;
+    background: var(--bg);
+    padding: 0 8px;
+    font-size: 10px;
+    letter-spacing: 3px;
+    color: var(--gold);
+  }
+
+  .mission-header::after {
+    content: attr(data-stamp);
+    position: absolute;
+    bottom: 12px;
+    right: 16px;
+    font-size: 9px;
+    letter-spacing: 2px;
+    color: var(--gold-dim);
+    opacity: 0.6;
+  }
+
+  .mission-title {
+    font-family: 'Special Elite', serif;
+    font-size: 28px;
+    color: var(--gold-light);
+    line-height: 1.2;
+    margin-bottom: 8px;
+  }
+
+  .mission-desc {
+    font-size: 12px;
+    color: var(--cream-dim);
+    line-height: 1.7;
+    letter-spacing: 0.5px;
+  }
+
+  /* STATS ROW */
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 8px;
+    margin-bottom: 24px;
+  }
+
+  .stat-box {
+    border: 1px solid;
+    padding: 12px 10px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+    background: var(--bg2);
+  }
+
+  .stat-box:hover { transform: translateY(-2px); }
+
+  .stat-box[data-box="1"] { border-color: var(--box1); }
+  .stat-box[data-box="2"] { border-color: var(--box2); }
+  .stat-box[data-box="3"] { border-color: var(--box3); }
+  .stat-box[data-box="4"] { border-color: var(--box4); }
+  .stat-box[data-box="5"] { border-color: var(--box5); }
+
+  .stat-label {
+    font-size: 9px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+    color: var(--cream-dim);
+  }
+
+  .stat-num {
+    font-family: 'Oswald', sans-serif;
+    font-size: 28px;
+    font-weight: 300;
+    line-height: 1;
+  }
+
+  .stat-box[data-box="1"] .stat-num { color: var(--box1); }
+  .stat-box[data-box="2"] .stat-num { color: var(--box2); }
+  .stat-box[data-box="3"] .stat-num { color: var(--box3); }
+  .stat-box[data-box="4"] .stat-num { color: var(--box4); }
+  .stat-box[data-box="5"] .stat-num { color: var(--box5); }
+
+  .stat-freq {
+    font-size: 9px;
+    color: var(--cream-dim);
+    margin-top: 4px;
+    opacity: 0.7;
+  }
+
+  /* TODAY SECTION */
+  .section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--green);
+  }
+
+  .section-title {
+    font-family: 'Oswald', sans-serif;
+    font-weight: 400;
+    font-size: 13px;
+    letter-spacing: 4px;
+    color: var(--gold);
+    text-transform: uppercase;
+  }
+
+  .section-count {
+    font-size: 11px;
+    color: var(--cream-dim);
+    letter-spacing: 1px;
+  }
+
+  /* SESSION CARDS */
+  .session-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 30px;
+  }
+
+  .session-item {
+    border: 1px solid var(--green);
+    padding: 14px 18px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: var(--bg2);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .session-item::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 3px;
+  }
+
+  .session-item.new-words::before { background: var(--gold); }
+  .session-item.review::before { background: var(--box3); }
+  .session-item.completed { opacity: 0.5; }
+  .session-item.completed::after {
+    content: '✓ COMPLETED';
+    position: absolute;
+    right: 16px;
+    font-size: 9px;
+    letter-spacing: 2px;
+    color: var(--box4);
+  }
+
+  .session-item:hover:not(.completed) {
+    background: var(--bg3);
+    border-color: var(--gold-dim);
+  }
+
+  .session-left { display: flex; flex-direction: column; gap: 4px; }
+
+  .session-name {
+    font-family: 'Oswald', sans-serif;
+    font-size: 14px;
+    font-weight: 400;
+    letter-spacing: 2px;
+    color: var(--cream);
+    text-transform: uppercase;
+  }
+
+  .session-meta {
+    font-size: 10px;
+    color: var(--cream-dim);
+    letter-spacing: 1px;
+  }
+
+  .session-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .card-count-badge {
+    font-family: 'Oswald', sans-serif;
+    font-size: 18px;
+    font-weight: 300;
+    color: var(--gold);
+  }
+
+  .arrow-icon { color: var(--gold-dim); font-size: 14px; }
+
+  /* CTAs */
+  .btn {
+    font-family: 'Oswald', sans-serif;
+    font-size: 12px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    padding: 12px 24px;
+    border: 1px solid;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: transparent;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .btn-primary {
+    border-color: var(--gold);
+    color: var(--gold);
+  }
+  .btn-primary:hover {
+    background: var(--gold);
+    color: var(--ink);
+  }
+
+  .btn-danger {
+    border-color: var(--red-light);
+    color: var(--red-light);
+  }
+  .btn-danger:hover {
+    background: var(--red-light);
+    color: var(--cream);
+  }
+
+  .btn-ghost {
+    border-color: var(--green);
+    color: var(--cream-dim);
+  }
+  .btn-ghost:hover {
+    border-color: var(--cream-dim);
+    color: var(--cream);
+  }
+
+  /* STUDY SCREEN */
+  #study-screen {
+    max-width: 640px;
+    margin: 0 auto;
+  }
+
+  .study-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 30px;
+  }
+
+  .study-title {
+    font-family: 'Oswald', sans-serif;
+    font-size: 13px;
+    letter-spacing: 4px;
+    color: var(--gold);
+  }
+
+  .progress-bar-wrap {
+    height: 2px;
+    background: var(--green);
+    margin-bottom: 30px;
+    position: relative;
+  }
+
+  .progress-bar-fill {
+    height: 100%;
+    background: var(--gold);
+    transition: width 0.4s ease;
+  }
+
+  .progress-label {
+    position: absolute;
+    right: 0;
+    top: 6px;
+    font-size: 10px;
+    color: var(--cream-dim);
+    letter-spacing: 1px;
+  }
+
+  /* FLIP CARD */
+  .card-scene {
+    perspective: 1200px;
+    margin-bottom: 28px;
+  }
+
+  .flip-card {
+    width: 100%;
+    min-height: 320px;
+    position: relative;
+    transform-style: preserve-3d;
+    transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    cursor: pointer;
+  }
+
+  .flip-card.flipped { transform: rotateY(180deg); }
+
+  .card-face {
+    position: absolute;
+    inset: 0;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    border: 1px solid var(--gold-dim);
+    padding: 40px 36px;
+    display: flex;
+    flex-direction: column;
+    background: var(--bg2);
+  }
+
+  .card-front { background: linear-gradient(135deg, var(--bg2), var(--bg3)); }
+  .card-back {
+    background: linear-gradient(135deg, var(--bg3), #0f1a0f);
+    transform: rotateY(180deg);
+  }
+
+  .card-corner {
+    font-size: 9px;
+    letter-spacing: 2px;
+    color: var(--gold-dim);
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  .card-box-indicator {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: auto;
+  }
+
+  .box-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+  }
+
+  .card-difficulty {
+    font-size: 16px;
+    margin-bottom: 6px;
+  }
+
+  .card-word {
+    font-family: 'Special Elite', serif;
+    font-size: 52px;
+    color: var(--gold-light);
+    line-height: 1;
+    margin: auto 0;
+    letter-spacing: 2px;
+  }
+
+  .card-hint {
+    font-size: 10px;
+    color: var(--green);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin-top: auto;
+    text-align: center;
+    animation: blink 2s infinite;
+  }
+
+  /* SPEECH BUTTON */
+  .speech-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: transparent;
+    border: 1px solid var(--gold-dim);
+    color: var(--gold-dim);
+    padding: 5px 12px;
+    cursor: pointer;
+    font-family: 'Oswald', sans-serif;
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    transition: all 0.2s;
+    margin-top: 10px;
+    align-self: flex-start;
+  }
+  .speech-btn:hover {
+    border-color: var(--gold);
+    color: var(--gold);
+  }
+  .speech-btn.speaking {
+    border-color: var(--gold-light);
+    color: var(--gold-light);
+    animation: pulse-glow 0.8s infinite alternate;
+  }
+  @keyframes pulse-glow {
+    from { box-shadow: 0 0 0px var(--gold-dim); }
+    to   { box-shadow: 0 0 8px var(--gold); }
+  }
+  .speech-icon { font-size: 13px; }
+
+  @keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+
+  .card-translation-label {
+    font-size: 10px;
+    letter-spacing: 3px;
+    color: var(--gold-dim);
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+
+  .card-translation {
+    font-family: 'Special Elite', serif;
+    font-size: 36px;
+    color: var(--gold-light);
+    line-height: 1.2;
+    margin-bottom: 20px;
+  }
+
+  .card-example-label {
+    font-size: 9px;
+    letter-spacing: 2px;
+    color: var(--cream-dim);
+    text-transform: uppercase;
+    margin-bottom: 8px;
+    opacity: 0.7;
+  }
+
+  .card-example {
+    font-style: italic;
+    font-size: 14px;
+    color: var(--cream);
+    line-height: 1.6;
+    border-left: 2px solid var(--gold-dim);
+    padding-left: 14px;
+  }
+
+  .card-example em {
+    color: var(--gold-light);
+    font-style: normal;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+
+  /* ANSWER BUTTONS */
+  .answer-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-top: 4px;
+  }
+
+  .answer-btn {
+    padding: 16px;
+    border: 1px solid;
+    font-family: 'Oswald', sans-serif;
+    font-size: 13px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+
+  .btn-correct {
+    border-color: var(--box4);
+    color: var(--box4);
+    background: transparent;
+  }
+  .btn-correct:hover, .btn-correct:active {
+    background: var(--box4);
+    color: var(--ink);
+    transform: scale(1.02);
+  }
+
+  .btn-wrong {
+    border-color: var(--red-light);
+    color: var(--red-light);
+    background: transparent;
+  }
+  .btn-wrong:hover, .btn-wrong:active {
+    background: var(--red-light);
+    color: var(--cream);
+    transform: scale(1.02);
+  }
+
+  .answer-row.hidden { display: none; }
+
+  /* SESSION COMPLETE */
+  .session-complete {
+    border: 1px solid var(--gold-dim);
+    padding: 40px;
+    text-align: center;
+    background: var(--bg2);
+    display: none;
+  }
+
+  .session-complete.visible { display: block; }
+
+  .complete-title {
+    font-family: 'Special Elite', serif;
+    font-size: 36px;
+    color: var(--gold-light);
+    margin-bottom: 8px;
+  }
+
+  .complete-sub {
+    font-size: 12px;
+    color: var(--cream-dim);
+    letter-spacing: 2px;
+    margin-bottom: 30px;
+  }
+
+  .complete-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-bottom: 30px;
+  }
+
+  .complete-stat {
+    padding: 16px;
+    border: 1px solid var(--green);
+    background: var(--bg3);
+  }
+
+  .complete-stat-num {
+    font-family: 'Oswald', sans-serif;
+    font-size: 32px;
+    font-weight: 300;
+    color: var(--gold);
+  }
+
+  .complete-stat-label {
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: var(--cream-dim);
+    text-transform: uppercase;
+    margin-top: 4px;
+  }
+
+  /* RESET CONFIRM */
+  .reset-section {
+    margin-top: 40px;
+    padding-top: 20px;
+    border-top: 1px solid var(--green);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .reset-label {
+    font-size: 11px;
+    color: var(--cream-dim);
+    letter-spacing: 1px;
+  }
+
+  /* EMPTY STATE */
+  .empty-state {
+    border: 1px dashed var(--green);
+    padding: 40px;
+    text-align: center;
+    color: var(--cream-dim);
+    font-size: 13px;
+    letter-spacing: 1px;
+    line-height: 2;
+  }
+
+  /* PROGRESS OVERVIEW */
+  .overview-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 6px;
+    margin-bottom: 24px;
+  }
+
+  .level-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border: 1px solid var(--green);
+    padding: 10px 14px;
+    background: var(--bg2);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .level-row:hover { border-color: var(--gold-dim); }
+
+  .level-name {
+    font-family: 'Oswald', sans-serif;
+    font-size: 12px;
+    letter-spacing: 2px;
+    color: var(--cream);
+  }
+
+  .level-progress {
+    font-size: 10px;
+    color: var(--cream-dim);
+  }
+
+  /* BACK NAV */
+  .back-nav {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 24px;
+    cursor: pointer;
+    width: fit-content;
+  }
+
+  .back-nav:hover .back-label { color: var(--gold); }
+
+  .back-label {
+    font-size: 11px;
+    letter-spacing: 3px;
+    color: var(--cream-dim);
+    text-transform: uppercase;
+    transition: color 0.2s;
+  }
+
+  /* RESPONSIVE */
+  @media (max-width: 600px) {
+    header { padding: 14px 16px; }
+    .logo-main { font-size: 16px; letter-spacing: 4px; }
+    main { padding: 20px 14px 80px; }
+    .stats-row { grid-template-columns: repeat(5, 1fr); gap: 5px; }
+    .stat-box { padding: 8px 4px; }
+    .stat-num { font-size: 22px; }
+    .stat-freq { display: none; }
+    .card-word { font-size: 38px; }
+    .card-face { padding: 28px 22px; }
+  }
+
+  /* ANIMATIONS */
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .screen.active > * {
+    animation: fadeInUp 0.4s ease both;
+  }
+
+  .screen.active > *:nth-child(2) { animation-delay: 0.05s; }
+  .screen.active > *:nth-child(3) { animation-delay: 0.1s; }
+  .screen.active > *:nth-child(4) { animation-delay: 0.15s; }
+
+  /* NOTIFICATION */
+  .toast {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    background: var(--bg3);
+    border: 1px solid var(--gold-dim);
+    padding: 14px 20px;
+    font-size: 12px;
+    letter-spacing: 1px;
+    color: var(--cream);
+    z-index: 9999;
+    transform: translateX(120%);
+    transition: transform 0.3s ease;
+    max-width: 280px;
+  }
+  .toast.show { transform: translateX(0); }
+
+  /* BOX COLORS for indicators */
+  .box-1 { background: var(--box1); }
+  .box-2 { background: var(--box2); }
+  .box-3 { background: var(--box3); }
+  .box-4 { background: var(--box4); }
+  .box-5 { background: var(--box5); }
+
+  .today-indicator {
+    font-size: 9px;
+    letter-spacing: 2px;
+    color: var(--box4);
+    text-transform: uppercase;
+    padding: 2px 6px;
+    border: 1px solid var(--box4);
+    display: inline-block;
+    margin-left: 8px;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo-block">
+    <div class="logo-main">Barsky Protocol</div>
+    <div class="logo-sub">Vocabulary Intelligence System</div>
+  </div>
+  <div class="header-right">
+    <div class="date-stamp" id="header-date"></div>
+    <div class="day-badge" id="header-day"></div>
+  </div>
+</header>
+
+<main>
+  <!-- HOME SCREEN -->
+  <div id="home-screen" class="screen active">
+    <div class="mission-header" data-stamp="CLASSIFICATION: OPERATIVE USE ONLY">
+      <div class="mission-title" id="home-greeting">Good Evening, Agent.</div>
+      <div class="mission-desc" id="home-desc">Your linguistic training continues. The Leitner system tracks your mastery across 5 security boxes. Cards advance with each success — failure sends them to Box 3 for reinforcement. Reach Box 5 to permanently secure a word.</div>
+    </div>
+
+    <div class="stats-row">
+      <div class="stat-box" data-box="1" onclick="filterByBox(1)">
+        <div class="stat-label">Box 1</div>
+        <div class="stat-num" id="count-box1">0</div>
+        <div class="stat-freq">Daily</div>
+      </div>
+      <div class="stat-box" data-box="2" onclick="filterByBox(2)">
+        <div class="stat-label">Box 2</div>
+        <div class="stat-num" id="count-box2">0</div>
+        <div class="stat-freq">2 days</div>
+      </div>
+      <div class="stat-box" data-box="3" onclick="filterByBox(3)">
+        <div class="stat-label">Box 3</div>
+        <div class="stat-num" id="count-box3">0</div>
+        <div class="stat-freq">4 days</div>
+      </div>
+      <div class="stat-box" data-box="4" onclick="filterByBox(4)">
+        <div class="stat-label">Box 4</div>
+        <div class="stat-num" id="count-box4">0</div>
+        <div class="stat-freq">7 days</div>
+      </div>
+      <div class="stat-box" data-box="5" onclick="filterByBox(5)">
+        <div class="stat-label">Box 5</div>
+        <div class="stat-num" id="count-box5">0</div>
+        <div class="stat-freq">14 days</div>
+      </div>
+    </div>
+
+    <div class="section-header">
+      <div class="section-title">▶ Today's Operations</div>
+      <div class="section-count" id="today-total"></div>
+    </div>
+
+    <div class="session-list" id="today-sessions"></div>
+
+    <div class="reset-section">
+      <div class="reset-label">Reset all progress and start over</div>
+      <button class="btn btn-danger" onclick="confirmReset()">⚠ Reset Protocol</button>
+    </div>
+  </div>
+
+  <!-- STUDY SCREEN -->
+  <div id="study-screen" class="screen">
+    <div class="back-nav" onclick="goHome()">
+      <span style="color:var(--gold-dim)">◀</span>
+      <span class="back-label">Back to Operations</span>
+    </div>
+
+    <div class="study-header">
+      <div class="study-title" id="study-session-name">SESSION</div>
+      <div style="font-size:11px;color:var(--cream-dim);letter-spacing:1px" id="study-counter">0 / 0</div>
+    </div>
+
+    <div class="progress-bar-wrap">
+      <div class="progress-bar-fill" id="progress-fill" style="width:0%"></div>
+      <div class="progress-label" id="progress-text">0%</div>
+    </div>
+
+    <div class="card-scene" id="card-scene" style="display:none">
+      <div class="flip-card" id="flip-card" onclick="flipCard()">
+        <div class="card-face card-front">
+          <div class="card-corner">▶ VOCABULARY CARD</div>
+          <div class="card-box-indicator">
+            <div class="box-dot" id="front-box-dot"></div>
+            <span style="font-size:10px;color:var(--cream-dim);letter-spacing:1px" id="front-box-label">BOX 1</span>
+            <span style="margin-left:auto" class="card-difficulty" id="front-difficulty"></span>
+          </div>
+          <div class="card-word" id="card-word">WORD</div>
+          <button class="speech-btn" id="speech-btn-front" onclick="event.stopPropagation(); speakWord()">
+            <span class="speech-icon">🔊</span> <span id="speech-btn-front-label">PRONOUNCE</span>
+          </button>
+          <div class="card-hint" style="margin-top:12px">tap to reveal ▼</div>
+        </div>
+        <div class="card-face card-back">
+          <div class="card-corner">▶ CLASSIFIED INTEL</div>
+          <div class="card-box-indicator">
+            <div class="box-dot" id="back-box-dot"></div>
+            <span style="font-size:10px;color:var(--cream-dim);letter-spacing:1px" id="back-box-label">BOX 1</span>
+          </div>
+          <div class="card-translation-label">Translation</div>
+          <div class="card-translation" id="card-translation">—</div>
+          <div class="card-example-label">Field Example</div>
+          <div class="card-example" id="card-example">—</div>
+          <button class="speech-btn" id="speech-btn-back" onclick="event.stopPropagation(); speakExample()" style="margin-top:16px">
+            <span class="speech-icon">🔊</span> READ EXAMPLE
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="answer-row hidden" id="answer-row">
+      <button class="answer-btn btn-wrong" onclick="answerCard(false)">✕ Incorrect</button>
+      <button class="answer-btn btn-correct" onclick="answerCard(true)">✓ Correct</button>
+    </div>
+
+    <div class="session-complete" id="session-complete">
+      <div class="complete-title">Mission Complete</div>
+      <div class="complete-sub" id="complete-sub">Session debriefing</div>
+      <div class="complete-stats">
+        <div class="complete-stat">
+          <div class="complete-stat-num" id="stat-correct">0</div>
+          <div class="complete-stat-label">Correct</div>
+        </div>
+        <div class="complete-stat">
+          <div class="complete-stat-num" id="stat-wrong">0</div>
+          <div class="complete-stat-label">Incorrect</div>
+        </div>
+        <div class="complete-stat">
+          <div class="complete-stat-num" id="stat-accuracy">0%</div>
+          <div class="complete-stat-label">Accuracy</div>
+        </div>
+      </div>
+      <button class="btn btn-primary" onclick="goHome()" style="margin:0 auto;display:flex">◀ Return to Base</button>
+    </div>
+  </div>
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ============================================================
+// VOCABULARY DATA — 500 words across 10 levels
+// ============================================================
+const VOCAB_DATA = {
+  1: [
+    { word: "PARAPHRASE", translation: "換句話說、改述", example: "She asked him to <em>paraphrase</em> the contract in simpler terms.", difficulty: "⭐" },
+    { word: "OSTENSIBLE", translation: "表面上的、看似的", example: "His <em>ostensible</em> reason for leaving early was a headache.", difficulty: "⭐⭐" },
+    { word: "DIGRESS", translation: "離題、偏離", example: "The professor tended to <em>digress</em> into unrelated stories during lectures.", difficulty: "⭐" },
+    { word: "UNCANNY", translation: "奇異的、不可思議的", example: "She bore an <em>uncanny</em> resemblance to her grandmother.", difficulty: "⭐" },
+    { word: "CANDOR", translation: "坦率、直言", example: "The journalist was praised for her <em>candor</em> in reporting.", difficulty: "⭐⭐" },
+    { word: "MOROSE", translation: "悶悶不樂的、陰鬱的", example: "He became <em>morose</em> after receiving the disappointing news.", difficulty: "⭐⭐" },
+    { word: "ADEPT", translation: "熟練的、擅長的", example: "She is <em>adept</em> at navigating complex negotiations.", difficulty: "⭐" },
+    { word: "SATURATED", translation: "飽和的、充滿的", example: "The market was <em>saturated</em> with cheap imitations.", difficulty: "⭐" },
+    { word: "PRAGMATIC", translation: "務實的、實用的", example: "A <em>pragmatic</em> approach was needed to solve the crisis.", difficulty: "⭐" },
+    { word: "CONGENIAL", translation: "友善的、意氣相投的", example: "The <em>congenial</em> atmosphere made everyone feel at ease.", difficulty: "⭐⭐" },
+    { word: "CAPRICIOUS", translation: "善變的、任性的", example: "Her <em>capricious</em> moods made it hard to predict her reactions.", difficulty: "⭐⭐" },
+    { word: "BLATANT", translation: "明目張膽的、公然的", example: "It was a <em>blatant</em> attempt to mislead the public.", difficulty: "⭐" },
+    { word: "OBLIGATORY", translation: "強制的、必做的", example: "Attendance at the briefing was <em>obligatory</em> for all agents.", difficulty: "⭐" },
+    { word: "NEGLIGIBLE", translation: "微不足道的、可忽略的", example: "The side effects were <em>negligible</em> at such a low dose.", difficulty: "⭐⭐" },
+    { word: "ADAMANT", translation: "堅決的、固執的", example: "She was <em>adamant</em> that she had not signed the document.", difficulty: "⭐" },
+    { word: "SPORADIC", translation: "零星的、不定期的", example: "They received only <em>sporadic</em> reports from the field.", difficulty: "⭐⭐" },
+    { word: "VANGUARD", translation: "先鋒、前衛", example: "The company positioned itself at the <em>vanguard</em> of AI research.", difficulty: "⭐⭐" },
+    { word: "CONCUR", translation: "同意、意見一致", example: "All committee members <em>concurred</em> with the final decision.", difficulty: "⭐" },
+    { word: "PRECOCIOUSNESS", translation: "早熟", example: "Her <em>precociousness</em> was evident when she read at age three.", difficulty: "⭐⭐" },
+    { word: "ALOOF", translation: "冷漠的、疏遠的", example: "He kept himself <em>aloof</em> from office gossip.", difficulty: "⭐" },
+    { word: "CREED", translation: "信條、信仰", example: "Honesty was the central <em>creed</em> of his professional life.", difficulty: "⭐" },
+    { word: "TAWDRY", translation: "俗麗的、廉價的", example: "The shop sold <em>tawdry</em> souvenirs to unsuspecting tourists.", difficulty: "⭐⭐" },
+    { word: "PEEVISH", translation: "急躁的、易怒的", example: "He grew <em>peevish</em> when the meeting ran over two hours.", difficulty: "⭐⭐" },
+    { word: "ARDUOUS", translation: "艱難的、費力的", example: "The <em>arduous</em> climb took three days to complete.", difficulty: "⭐" },
+    { word: "PERSONABLE", translation: "和藹可親的、討人喜歡的", example: "The new recruit was <em>personable</em> and quickly made friends.", difficulty: "⭐" },
+    { word: "RESOLUTE", translation: "堅定的、果斷的", example: "She remained <em>resolute</em> in the face of severe opposition.", difficulty: "⭐" },
+    { word: "SUPPOSITION", translation: "假設、推測", example: "His argument rested on mere <em>supposition</em>, not evidence.", difficulty: "⭐⭐" },
+    { word: "ARBITRARY", translation: "任意的、武斷的", example: "The rule seemed <em>arbitrary</em> and difficult to justify.", difficulty: "⭐⭐" },
+    { word: "MONOTONOUS", translation: "單調的、枯燥的", example: "The <em>monotonous</em> factory work dulled his enthusiasm.", difficulty: "⭐" },
+    { word: "LEGACY", translation: "遺產、影響", example: "Her greatest <em>legacy</em> was the school she founded.", difficulty: "⭐" },
+    { word: "MANIFOLD", translation: "多種多樣的", example: "The <em>manifold</em> challenges of urban planning require careful study.", difficulty: "⭐⭐" },
+    { word: "PLIANT", translation: "易彎曲的、順從的", example: "The young branches were <em>pliant</em> enough to weave into baskets.", difficulty: "⭐⭐" },
+    { word: "RETORT", translation: "反駁、回嘴", example: "She had a sharp <em>retort</em> ready before he finished speaking.", difficulty: "⭐" },
+    { word: "OBSTINATE", translation: "頑固的、固執的", example: "The <em>obstinate</em> diplomat refused to alter his position.", difficulty: "⭐⭐" },
+    { word: "LACERATE", translation: "割傷、撕裂", example: "The broken glass <em>lacerated</em> his hand badly.", difficulty: "⭐⭐" },
+    { word: "OMNIPOTENT", translation: "全能的", example: "No government is truly <em>omnipotent</em>; all face constraints.", difficulty: "⭐" },
+    { word: "UNSCRUPULOUS", translation: "不擇手段的、無道德的", example: "The <em>unscrupulous</em> broker sold worthless investments.", difficulty: "⭐⭐" },
+    { word: "RENAISSANCE", translation: "復興、文藝復興", example: "The city experienced a cultural <em>renaissance</em> after decades of neglect.", difficulty: "⭐" },
+    { word: "GENESIS", translation: "起源、創始", example: "The <em>genesis</em> of the conflict lay in decades of territorial disputes.", difficulty: "⭐" },
+    { word: "WARRANT", translation: "授權、搜查令；正當理由", example: "The police obtained a <em>warrant</em> to search the premises.", difficulty: "⭐" },
+    { word: "CANTANKEROUS", translation: "脾氣暴躁的、好爭辯的", example: "The <em>cantankerous</em> old man complained about every minor inconvenience.", difficulty: "⭐⭐" },
+    { word: "FLIPPANT", translation: "輕浮的、不認真的", example: "His <em>flippant</em> remark offended everyone in the room.", difficulty: "⭐⭐" },
+    { word: "SUBJUGATE", translation: "征服、壓制", example: "Conquerors often tried to <em>subjugate</em> the local population.", difficulty: "⭐⭐" },
+    { word: "WRY", translation: "苦澀幽默的、扭曲的", example: "She gave a <em>wry</em> smile at the irony of the situation.", difficulty: "⭐" },
+    { word: "URBANE", translation: "文雅的、彬彬有禮的", example: "His <em>urbane</em> manner charmed every guest at the reception.", difficulty: "⭐⭐" },
+    { word: "JARGON", translation: "行話、術語", example: "The manual was full of technical <em>jargon</em> that confused beginners.", difficulty: "⭐" },
+    { word: "PRUDENT", translation: "謹慎的、明智的", example: "It would be <em>prudent</em> to save some money for emergencies.", difficulty: "⭐" },
+    { word: "INVIOLABLE", translation: "不可侵犯的、神聖的", example: "Freedom of speech is considered an <em>inviolable</em> right.", difficulty: "⭐⭐" },
+    { word: "COMMODIOUS", translation: "寬敞的、舒適的", example: "They moved into a more <em>commodious</em> apartment downtown.", difficulty: "⭐⭐" },
+    { word: "PROXIMITY", translation: "接近、鄰近", example: "The hotel's <em>proximity</em> to the airport was its main selling point.", difficulty: "⭐" }
+  ],
+  2: [
+    { word: "ADVOCATE", translation: "倡導者；倡導", example: "She has been a lifelong <em>advocate</em> for environmental reform.", difficulty: "⭐" },
+    { word: "DELEGATE", translation: "代表；委派", example: "He learned to <em>delegate</em> tasks instead of doing everything himself.", difficulty: "⭐" },
+    { word: "UNPRECEDENTED", translation: "史無前例的", example: "The pandemic caused <em>unprecedented</em> disruption to daily life.", difficulty: "⭐" },
+    { word: "POIGNANT", translation: "令人感動的、悲痛的", example: "The film's ending was both <em>poignant</em> and deeply satisfying.", difficulty: "⭐" },
+    { word: "NEBULOUS", translation: "模糊的、不明確的", example: "The plan remained <em>nebulous</em> even after hours of discussion.", difficulty: "⭐⭐" },
+    { word: "CLANDESTINE", translation: "秘密的、偷偷摸摸的", example: "They conducted a <em>clandestine</em> meeting in the basement.", difficulty: "⭐⭐" },
+    { word: "TIRADE", translation: "長篇抨擊、謾罵", example: "He unleashed a lengthy <em>tirade</em> against the new policy.", difficulty: "⭐⭐" },
+    { word: "RECUR", translation: "再發生、反覆出現", example: "The theme of betrayal tends to <em>recur</em> throughout his novels.", difficulty: "⭐" },
+    { word: "TACIT", translation: "默示的、心照不宣的", example: "There was a <em>tacit</em> understanding between them — no one spoke.", difficulty: "⭐⭐" },
+    { word: "ALLEGATION", translation: "指控、聲稱", example: "The <em>allegations</em> of corruption shocked the entire department.", difficulty: "⭐" },
+    { word: "GULLIBLE", translation: "輕信的、容易上當的", example: "He was too <em>gullible</em> to see through the obvious scam.", difficulty: "⭐" },
+    { word: "BENIGN", translation: "良性的；仁慈的", example: "The tumor turned out to be <em>benign</em>, much to their relief.", difficulty: "⭐" },
+    { word: "PERIPHERAL", translation: "外圍的、次要的", example: "These issues are <em>peripheral</em> to the main debate.", difficulty: "⭐⭐" },
+    { word: "REBUFF", translation: "拒絕、冷遇", example: "His offer of help was met with a firm <em>rebuff</em>.", difficulty: "⭐⭐" },
+    { word: "ANIMOSITY", translation: "敵意、憎恨", example: "Years of <em>animosity</em> between the two families finally erupted.", difficulty: "⭐⭐" },
+    { word: "TENUOUS", translation: "脆弱的、微弱的", example: "The connection between the two events was extremely <em>tenuous</em>.", difficulty: "⭐⭐" },
+    { word: "COMPLACENT", translation: "自滿的、漠然的", example: "Don't become <em>complacent</em> just because things are going well.", difficulty: "⭐" },
+    { word: "ACME", translation: "頂峰、頂點", example: "That performance represented the <em>acme</em> of her career.", difficulty: "⭐⭐" },
+    { word: "DEFUNCT", translation: "已停止運作的、廢棄的", example: "The <em>defunct</em> factory was converted into luxury apartments.", difficulty: "⭐⭐" },
+    { word: "ABET", translation: "煽動、協助（犯罪）", example: "He was charged with aiding and <em>abetting</em> the fraud.", difficulty: "⭐⭐" },
+    { word: "HAGGARD", translation: "憔悴的、疲憊不堪的", example: "She looked <em>haggard</em> after three sleepless nights.", difficulty: "⭐⭐" },
+    { word: "WAIVE", translation: "放棄（權利）、免除", example: "He chose to <em>waive</em> his right to an attorney.", difficulty: "⭐⭐" },
+    { word: "CARNAL", translation: "肉慾的、肉體的", example: "The novel explores the tension between <em>carnal</em> desire and moral duty.", difficulty: "⭐⭐" },
+    { word: "SANCTION", translation: "制裁；批准", example: "Economic <em>sanctions</em> were imposed on the offending nation.", difficulty: "⭐" },
+    { word: "AMBIGUOUS", translation: "含糊的、有歧義的", example: "The instructions were so <em>ambiguous</em> that no one knew what to do.", difficulty: "⭐" },
+    { word: "SPENDTHRIFT", translation: "揮霍者、浪費者", example: "His reputation as a <em>spendthrift</em> made investors nervous.", difficulty: "⭐⭐" },
+    { word: "MOLLIFY", translation: "平息、安撫", example: "She tried to <em>mollify</em> the angry customer with a refund.", difficulty: "⭐⭐" },
+    { word: "UNEQUIVOCAL", translation: "明確的、毫不含糊的", example: "The verdict was an <em>unequivocal</em> rejection of the defendant's claims.", difficulty: "⭐⭐" },
+    { word: "MALLEABLE", translation: "易塑造的、順從的", example: "Young minds are more <em>malleable</em> than we often realize.", difficulty: "⭐⭐" },
+    { word: "VERBOSE", translation: "囉嗦的、冗長的", example: "His <em>verbose</em> writing style frustrated his editors.", difficulty: "⭐⭐" },
+    { word: "TRANSIENT", translation: "短暫的、過渡的", example: "The pain was <em>transient</em> and disappeared within a few hours.", difficulty: "⭐⭐" },
+    { word: "NETTLE", translation: "惹怒、激怒", example: "His condescending tone <em>nettled</em> her more than the criticism itself.", difficulty: "⭐⭐" },
+    { word: "REPUDIATE", translation: "否認、拒絕承認", example: "He publicly <em>repudiated</em> the accusations against him.", difficulty: "⭐⭐" },
+    { word: "IMPETUOUS", translation: "衝動的、魯莽的", example: "Her <em>impetuous</em> decision to quit cost her greatly.", difficulty: "⭐⭐" },
+    { word: "FRUGAL", translation: "節儉的", example: "Living <em>frugally</em> allowed her to retire at forty.", difficulty: "⭐" },
+    { word: "INCONGRUOUS", translation: "不協調的、不相稱的", example: "The modern sculpture looked <em>incongruous</em> in the medieval courtyard.", difficulty: "⭐⭐" },
+    { word: "ASSUAGE", translation: "緩和、減輕", example: "Nothing could <em>assuage</em> his grief after the loss.", difficulty: "⭐⭐⭐" },
+    { word: "CORROBORATE", translation: "證實、支持", example: "Three witnesses <em>corroborated</em> her account of the event.", difficulty: "⭐⭐" },
+    { word: "EMBELLISH", translation: "修飾、潤色；誇大", example: "He had a habit of <em>embellishing</em> stories to make them more exciting.", difficulty: "⭐" },
+    { word: "AVARICIOUS", translation: "貪婪的", example: "The <em>avaricious</em> landlord raised the rent every six months.", difficulty: "⭐⭐" },
+    { word: "CURSORY", translation: "草率的、粗略的", example: "A <em>cursory</em> glance at the report revealed several obvious errors.", difficulty: "⭐⭐" },
+    { word: "VACILLATE", translation: "猶豫不決、動搖", example: "He <em>vacillated</em> so long that the opportunity passed.", difficulty: "⭐⭐" },
+    { word: "CLEMENT", translation: "仁慈的；（氣候）溫和的", example: "The judge was unusually <em>clement</em> in sentencing the young offender.", difficulty: "⭐⭐" },
+    { word: "LUCRATIVE", translation: "獲利豐厚的", example: "She abandoned academia for a more <em>lucrative</em> career in finance.", difficulty: "⭐" },
+    { word: "ALLOCATE", translation: "分配、撥出", example: "The budget was <em>allocated</em> equally across all departments.", difficulty: "⭐" },
+    { word: "RECONCILE", translation: "調解、使和解；對帳", example: "They struggled to <em>reconcile</em> their different visions for the project.", difficulty: "⭐" },
+    { word: "PARAGON", translation: "典範、楷模", example: "She was held up as a <em>paragon</em> of professional excellence.", difficulty: "⭐⭐" },
+    { word: "ANALOGOUS", translation: "類似的、相似的", example: "The process is <em>analogous</em> to how muscles are built through exercise.", difficulty: "⭐⭐" },
+    { word: "DIURNAL", translation: "白天的、每日的", example: "Many birds follow a <em>diurnal</em> pattern, active only during the day.", difficulty: "⭐⭐⭐" },
+    { word: "PRETEXT", translation: "藉口", example: "He used illness as a <em>pretext</em> to avoid the meeting.", difficulty: "⭐" }
+  ],
+  3: [
+    { word: "DEFRAY", translation: "支付（費用）", example: "The grant helped <em>defray</em> the cost of research materials.", difficulty: "⭐⭐" },
+    { word: "TACITURN", translation: "沉默寡言的", example: "He was a <em>taciturn</em> man who rarely offered his opinion.", difficulty: "⭐⭐" },
+    { word: "TERSE", translation: "簡短的、言簡意賅的", example: "Her <em>terse</em> reply signaled that the conversation was over.", difficulty: "⭐⭐" },
+    { word: "BOON", translation: "恩惠、好處", example: "The new highway was a <em>boon</em> for local businesses.", difficulty: "⭐⭐" },
+    { word: "PROLETARIAT", translation: "無產階級", example: "Marx believed the <em>proletariat</em> would eventually seize power.", difficulty: "⭐⭐" },
+    { word: "HETEROGENEOUS", translation: "異質的、多樣的", example: "The class was a <em>heterogeneous</em> mix of backgrounds and abilities.", difficulty: "⭐⭐" },
+    { word: "PITTANCE", translation: "微薄的收入、少量", example: "They worked long hours for a mere <em>pittance</em>.", difficulty: "⭐⭐" },
+    { word: "GLIB", translation: "油嘴滑舌的、膚淺流利的", example: "His <em>glib</em> answers satisfied no one at the press conference.", difficulty: "⭐⭐" },
+    { word: "PENCHANT", translation: "嗜好、偏好", example: "She has a <em>penchant</em> for collecting vintage maps.", difficulty: "⭐⭐" },
+    { word: "SOLICITOUS", translation: "關切的、殷勤的", example: "He was <em>solicitous</em> of her comfort during the long journey.", difficulty: "⭐⭐⭐" },
+    { word: "CIRCUMSCRIBE", translation: "限制、約束", example: "His authority was strictly <em>circumscribed</em> by company policy.", difficulty: "⭐⭐⭐" },
+    { word: "DEARTH", translation: "缺乏、不足", example: "There is a <em>dearth</em> of affordable housing in the city center.", difficulty: "⭐⭐" },
+    { word: "INGRATIATING", translation: "奉承討好的", example: "His <em>ingratiating</em> smile made everyone suspicious of his motives.", difficulty: "⭐⭐" },
+    { word: "MERCENARY", translation: "唯利是圖的；傭兵", example: "Critics accused him of taking a purely <em>mercenary</em> approach to art.", difficulty: "⭐⭐" },
+    { word: "EXTEMPORIZE", translation: "即興發言、臨時表演", example: "When the notes were lost, she had to <em>extemporize</em> the entire speech.", difficulty: "⭐⭐⭐" },
+    { word: "ERUDITE", translation: "博學的", example: "Her <em>erudite</em> commentary illuminated aspects others had missed.", difficulty: "⭐⭐" },
+    { word: "AUSTERE", translation: "嚴格的；樸素的", example: "The monastery maintained an <em>austere</em> lifestyle with no luxuries.", difficulty: "⭐⭐" },
+    { word: "LACONIC", translation: "言簡意賅的", example: "His <em>laconic</em> response — 'No' — ended the debate.", difficulty: "⭐⭐" },
+    { word: "AMELIORATE", translation: "改善、改良", example: "Aid agencies worked to <em>ameliorate</em> conditions in the refugee camp.", difficulty: "⭐⭐⭐" },
+    { word: "EXPUNGE", translation: "刪除、清除", example: "He petitioned the court to <em>expunge</em> the record of his arrest.", difficulty: "⭐⭐⭐" },
+    { word: "CIRCUMSPECT", translation: "謹慎小心的", example: "She was <em>circumspect</em> about revealing her sources to anyone.", difficulty: "⭐⭐⭐" },
+    { word: "QUIESCENT", translation: "靜止的、沉寂的", example: "The volcano had been <em>quiescent</em> for over two centuries.", difficulty: "⭐⭐⭐" },
+    { word: "FOIBLE", translation: "小缺點、弱點", example: "His friends tolerated his <em>foibles</em> with good humor.", difficulty: "⭐⭐" },
+    { word: "FERVENT", translation: "熱忱的、強烈的", example: "She was a <em>fervent</em> supporter of educational reform.", difficulty: "⭐" },
+    { word: "PROTRACT", translation: "延長、拖延", example: "The negotiations were <em>protracted</em> over several months.", difficulty: "⭐⭐" },
+    { word: "OSTENTATIOUS", translation: "炫耀的、賣弄的", example: "He drove an <em>ostentatious</em> gold sports car to every meeting.", difficulty: "⭐⭐" },
+    { word: "QUANDARY", translation: "困境、左右為難", example: "She was in a <em>quandary</em> about whether to stay or resign.", difficulty: "⭐⭐" },
+    { word: "CENSURE", translation: "譴責、批評", example: "The committee voted to <em>censure</em> the member for misconduct.", difficulty: "⭐⭐" },
+    { word: "CAVIL", translation: "吹毛求疵、無理取鬧", example: "He would always find something to <em>cavil</em> about, no matter how good the work.", difficulty: "⭐⭐⭐" },
+    { word: "ASSIMILATE", translation: "吸收；融入", example: "It took her years to fully <em>assimilate</em> into the new culture.", difficulty: "⭐" },
+    { word: "RESCIND", translation: "撤銷、廢除", example: "The government moved to <em>rescind</em> the unpopular regulation.", difficulty: "⭐⭐" },
+    { word: "DISCERNIBLE", translation: "可辨別的、明顯的", example: "There was no <em>discernible</em> difference between the two versions.", difficulty: "⭐⭐" },
+    { word: "CATACLYSM", translation: "大災難、劇變", example: "The war was a <em>cataclysm</em> that reshaped the entire continent.", difficulty: "⭐⭐" },
+    { word: "NARCISSISM", translation: "自戀、自我陶醉", example: "His <em>narcissism</em> made it impossible for him to listen to others.", difficulty: "⭐" },
+    { word: "INCRIMINATE", translation: "使入罪、牽連", example: "The email evidence <em>incriminated</em> three senior executives.", difficulty: "⭐" },
+    { word: "STIGMA", translation: "污名、烙印", example: "There is still a social <em>stigma</em> attached to mental illness.", difficulty: "⭐" },
+    { word: "BREVITY", translation: "簡潔、短暫", example: "The <em>brevity</em> of the speech made it all the more powerful.", difficulty: "⭐" },
+    { word: "PERQUISITE", translation: "額外待遇、特權", example: "A company car was one of the <em>perquisites</em> of the senior role.", difficulty: "⭐⭐⭐" },
+    { word: "INDIGENT", translation: "貧困的、貧窮的", example: "The clinic provided free services to <em>indigent</em> patients.", difficulty: "⭐⭐" },
+    { word: "CLAIRVOYANT", translation: "有透視力的；透視者", example: "He claimed to be <em>clairvoyant</em>, able to predict future events.", difficulty: "⭐" },
+    { word: "ADROIT", translation: "靈巧的、機敏的", example: "The diplomat was <em>adroit</em> at steering difficult conversations.", difficulty: "⭐⭐" },
+    { word: "PLATITUDE", translation: "陳腔濫調", example: "The speech was full of <em>platitudes</em> and offered no real solutions.", difficulty: "⭐⭐" },
+    { word: "FASTIDIOUS", translation: "挑剔的、一絲不苟的", example: "He was <em>fastidious</em> about every detail of the contract.", difficulty: "⭐⭐" },
+    { word: "VENDETTA", translation: "血仇、宿怨", example: "He pursued a personal <em>vendetta</em> against his former partner.", difficulty: "⭐" },
+    { word: "LUCID", translation: "清晰的、明白的", example: "Despite her age, her mind remained remarkably <em>lucid</em>.", difficulty: "⭐" },
+    { word: "SALIENT", translation: "顯著的、突出的", example: "The report highlighted the most <em>salient</em> risks facing the company.", difficulty: "⭐⭐" },
+    { word: "CATEGORICAL", translation: "明確的、絕對的", example: "His <em>categorical</em> denial left no room for doubt.", difficulty: "⭐⭐" },
+    { word: "INSCRUTABLE", translation: "難以理解的、神秘莫測的", example: "His expression was <em>inscrutable</em>, revealing nothing.", difficulty: "⭐⭐" },
+    { word: "CONSTRUE", translation: "解釋、理解", example: "Her silence was <em>construed</em> as an admission of guilt.", difficulty: "⭐⭐" },
+    { word: "ALLUDE", translation: "暗示、間接提及", example: "He <em>alluded</em> to past failures without naming them explicitly.", difficulty: "⭐⭐" }
+  ],
+  4: [
+    { word: "PROVIDENT", translation: "有遠見的、節儉的", example: "A <em>provident</em> investor always prepares for downturns.", difficulty: "⭐⭐" },
+    { word: "IMPUTE", translation: "歸咎於、歸因於", example: "She refused to let others <em>impute</em> bad motives to her actions.", difficulty: "⭐⭐⭐" },
+    { word: "ASTUTE", translation: "精明的、機敏的", example: "He made an <em>astute</em> observation that no one else had considered.", difficulty: "⭐⭐" },
+    { word: "NEOPHYTE", translation: "新手、初學者", example: "As a <em>neophyte</em>, she made several beginner mistakes.", difficulty: "⭐⭐" },
+    { word: "ENIGMA", translation: "謎、難以理解的人事物", example: "His motivations remained an <em>enigma</em> to those who knew him.", difficulty: "⭐" },
+    { word: "CREDENCE", translation: "相信、信任", example: "Her testimony gave <em>credence</em> to the defendant's story.", difficulty: "⭐⭐" },
+    { word: "VENERATE", translation: "崇敬、尊重", example: "The community <em>venerated</em> the elder for her wisdom.", difficulty: "⭐⭐" },
+    { word: "GARRULOUS", translation: "嘮叨的、話多的", example: "The <em>garrulous</em> host kept all the guests from leaving.", difficulty: "⭐⭐" },
+    { word: "TRENCHANT", translation: "犀利的、深刻的", example: "Her <em>trenchant</em> criticism cut through all the corporate spin.", difficulty: "⭐⭐⭐" },
+    { word: "AUTONOMOUS", translation: "自治的、自主的", example: "The region sought to become a fully <em>autonomous</em> state.", difficulty: "⭐" },
+    { word: "PANACEA", translation: "萬靈藥、萬能解決方案", example: "Technology is not a <em>panacea</em> for all social problems.", difficulty: "⭐⭐" },
+    { word: "EPHEMERAL", translation: "短暫的、轉瞬即逝的", example: "Fame in the digital age is increasingly <em>ephemeral</em>.", difficulty: "⭐⭐" },
+    { word: "ONEROUS", translation: "繁重的、費力的", example: "The <em>onerous</em> regulations discouraged new businesses from forming.", difficulty: "⭐⭐" },
+    { word: "LAITY", translation: "平信徒；外行人", example: "The priest spoke simply so the <em>laity</em> could understand the sermon.", difficulty: "⭐⭐⭐" },
+    { word: "PUNGENT", translation: "刺鼻的、辛辣的", example: "The <em>pungent</em> smell of garlic filled the entire kitchen.", difficulty: "⭐" },
+    { word: "PROSAIC", translation: "平凡的、缺乏想像力的", example: "He gave a <em>prosaic</em> answer to what was a profound question.", difficulty: "⭐⭐" },
+    { word: "CHARLATAN", translation: "騙子、江湖術士", example: "The so-called healer was exposed as a <em>charlatan</em>.", difficulty: "⭐⭐" },
+    { word: "PERFUNCTORY", translation: "敷衍的、草率的", example: "He gave a <em>perfunctory</em> apology that satisfied no one.", difficulty: "⭐⭐⭐" },
+    { word: "MORASS", translation: "困境、泥沼", example: "The company found itself in a legal <em>morass</em>.", difficulty: "⭐⭐" },
+    { word: "SOPHISTRY", translation: "詭辯、強詞奪理", example: "His argument was clever <em>sophistry</em>, not genuine reasoning.", difficulty: "⭐⭐⭐" },
+    { word: "PROLIFIC", translation: "多產的、豐富的", example: "She was a <em>prolific</em> author, publishing three novels a year.", difficulty: "⭐" },
+    { word: "MUNDANE", translation: "平凡的、世俗的", example: "He craved adventure, tired of his <em>mundane</em> routine.", difficulty: "⭐" },
+    { word: "MYRIAD", translation: "無數的、大量的", example: "There are a <em>myriad</em> of factors contributing to climate change.", difficulty: "⭐" },
+    { word: "DISSIDENT", translation: "異見者；持異議的", example: "The government jailed several prominent <em>dissidents</em>.", difficulty: "⭐" },
+    { word: "LAUDABLE", translation: "值得稱讚的", example: "His <em>laudable</em> effort to volunteer every weekend impressed his colleagues.", difficulty: "⭐⭐" },
+    { word: "INIMITABLE", translation: "無法模仿的、獨一無二的", example: "She had an <em>inimitable</em> style that no one could replicate.", difficulty: "⭐⭐⭐" },
+    { word: "JADED", translation: "厭倦的、感覺麻木的", example: "Years in the industry had left him feeling <em>jaded</em>.", difficulty: "⭐" },
+    { word: "MYOPIC", translation: "近視的；目光短淺的", example: "A <em>myopic</em> focus on quarterly profits ignores long-term health.", difficulty: "⭐⭐" },
+    { word: "DEMONSTRABLE", translation: "可證明的、明顯的", example: "There was a <em>demonstrable</em> link between diet and heart disease.", difficulty: "⭐⭐" },
+    { word: "CALLOW", translation: "幼稚的、無經驗的", example: "He was a <em>callow</em> youth when he first arrived in the city.", difficulty: "⭐⭐" },
+    { word: "ACQUIESCE", translation: "默許、勉強同意", example: "She <em>acquiesced</em> to the demands rather than prolong the argument.", difficulty: "⭐⭐⭐" },
+    { word: "PONTIFICATE", translation: "自以為是地發表意見", example: "He <em>pontificated</em> about ethics without ever examining his own behavior.", difficulty: "⭐⭐⭐" },
+    { word: "DELETERIOUS", translation: "有害的", example: "The <em>deleterious</em> effects of pollution on health are well documented.", difficulty: "⭐⭐⭐" },
+    { word: "AMBIVALENT", translation: "矛盾的、態度不明的", example: "She felt <em>ambivalent</em> about leaving — excited and afraid at once.", difficulty: "⭐" },
+    { word: "PENSIVE", translation: "沉思的、憂鬱的", example: "He stared out the window with a <em>pensive</em> expression.", difficulty: "⭐" },
+    { word: "IMPROMPTU", translation: "即興的、臨時的", example: "The CEO gave an <em>impromptu</em> speech to the gathered employees.", difficulty: "⭐" },
+    { word: "CONJECTURE", translation: "推測、猜想", example: "Without evidence, the theory remains pure <em>conjecture</em>.", difficulty: "⭐⭐" },
+    { word: "SURREPTITIOUS", translation: "秘密的、偷偷進行的", example: "He cast a <em>surreptitious</em> glance at her notes during the exam.", difficulty: "⭐⭐" },
+    { word: "EXEMPLARY", translation: "典範的、模範的", example: "Her <em>exemplary</em> conduct made her an obvious candidate for promotion.", difficulty: "⭐" },
+    { word: "IMPECCABLE", translation: "無懈可擊的、完美的", example: "He was known for his <em>impeccable</em> taste in clothing.", difficulty: "⭐⭐" },
+    { word: "ATTEST", translation: "證明、作證", example: "Several colleagues could <em>attest</em> to her outstanding performance.", difficulty: "⭐" },
+    { word: "COPIOUS", translation: "大量的、豐富的", example: "She took <em>copious</em> notes throughout the four-hour lecture.", difficulty: "⭐⭐" },
+    { word: "FALLACIOUS", translation: "謬誤的、錯誤的", example: "His argument was built on several <em>fallacious</em> assumptions.", difficulty: "⭐⭐" },
+    { word: "STOIC", translation: "堅忍的、不動感情的", example: "He remained <em>stoic</em> throughout the ordeal, showing no emotion.", difficulty: "⭐" },
+    { word: "RECRIMINATION", translation: "反責、相互指責", example: "The meeting dissolved into bitter <em>recriminations</em>.", difficulty: "⭐⭐⭐" },
+    { word: "AFFINITY", translation: "親和力、吸引力", example: "She felt an immediate <em>affinity</em> with the small coastal town.", difficulty: "⭐" },
+    { word: "VOLATILE", translation: "易變的、不穩定的", example: "The <em>volatile</em> situation could escalate without warning.", difficulty: "⭐" },
+    { word: "SQUALID", translation: "骯髒的、悲慘的", example: "The workers lived in <em>squalid</em> conditions on the factory grounds.", difficulty: "⭐⭐" },
+    { word: "EXPEDITE", translation: "加速、加快", example: "We need to <em>expedite</em> the review process before the deadline.", difficulty: "⭐" },
+    { word: "ABJECT", translation: "極度悲慘的；卑鄙的", example: "He lived in <em>abject</em> poverty with no running water or electricity.", difficulty: "⭐⭐" }
+  ],
+  5: [
+    { word: "VOLUBLE", translation: "健談的、話多的", example: "She was a <em>voluble</em> speaker who rarely needed prompting.", difficulty: "⭐⭐" },
+    { word: "COMMISERATE", translation: "同情、憐憫", example: "Friends gathered to <em>commiserate</em> after the team's loss.", difficulty: "⭐⭐" },
+    { word: "DILEMMA", translation: "兩難困境", example: "She faced a classic <em>dilemma</em>: loyalty or honesty.", difficulty: "⭐" },
+    { word: "TRANSITORY", translation: "短暫的、過渡的", example: "Happiness, he believed, was <em>transitory</em> and not to be chased.", difficulty: "⭐⭐" },
+    { word: "PHILANTHROPIC", translation: "慈善的、博愛的", example: "Her <em>philanthropic</em> donations funded dozens of scholarships.", difficulty: "⭐" },
+    { word: "LETHARGY", translation: "昏沉、無精打采", example: "A heavy meal brought on a familiar afternoon <em>lethargy</em>.", difficulty: "⭐⭐" },
+    { word: "EXONERATE", translation: "使免罪、開脫", example: "New DNA evidence <em>exonerated</em> the man after 20 years in prison.", difficulty: "⭐⭐" },
+    { word: "PUGNACIOUS", translation: "好鬥的、好爭吵的", example: "His <em>pugnacious</em> personality made him unpopular with colleagues.", difficulty: "⭐⭐" },
+    { word: "CONTRITION", translation: "悔恨、懺悔", example: "His expression of <em>contrition</em> seemed genuine and heartfelt.", difficulty: "⭐⭐" },
+    { word: "ABROGATE", translation: "廢除、取消", example: "The new government moved to <em>abrogate</em> several old treaties.", difficulty: "⭐⭐⭐" },
+    { word: "OFFICIOUS", translation: "多管閒事的、愛干涉的", example: "The <em>officious</em> security guard checked bags far more than necessary.", difficulty: "⭐⭐" },
+    { word: "INTRACTABLE", translation: "難以解決的、頑固的", example: "The conflict had become <em>intractable</em> after decades of violence.", difficulty: "⭐⭐" },
+    { word: "ALTRUISM", translation: "利他主義、無私", example: "Pure <em>altruism</em>, with no expectation of reward, is rare.", difficulty: "⭐" },
+    { word: "ACCOLADE", translation: "榮譽、獎賞", example: "She received the highest <em>accolade</em> the institution could offer.", difficulty: "⭐" },
+    { word: "VERNACULAR", translation: "方言、本土語言", example: "He wrote in the regional <em>vernacular</em>, not standard English.", difficulty: "⭐⭐" },
+    { word: "JUDICIOUS", translation: "明智的、審慎的", example: "A <em>judicious</em> selection of evidence made the case compelling.", difficulty: "⭐⭐" },
+    { word: "CHRYSALIS", translation: "蛹；變化中的狀態", example: "The startup was still in its <em>chrysalis</em> stage of development.", difficulty: "⭐⭐" },
+    { word: "GENTEEL", translation: "有教養的、體面的", example: "She came from a <em>genteel</em> family that valued manners above all.", difficulty: "⭐⭐" },
+    { word: "JOVIAL", translation: "歡樂的、快活的", example: "His <em>jovial</em> laugh could lighten any room.", difficulty: "⭐" },
+    { word: "SUBTERFUGE", translation: "詭計、欺騙手段", example: "He obtained the documents through <em>subterfuge</em>.", difficulty: "⭐⭐" },
+    { word: "EBULLIENCE", translation: "熱情洋溢、活躍", example: "Her <em>ebullience</em> was infectious and lifted everyone's spirits.", difficulty: "⭐⭐⭐" },
+    { word: "IMPERVIOUS", translation: "無法穿透的；不受影響的", example: "He seemed <em>impervious</em> to all forms of criticism.", difficulty: "⭐⭐" },
+    { word: "REMONSTRATE", translation: "抗議、規勸", example: "She <em>remonstrated</em> with her boss about the unfair policy.", difficulty: "⭐⭐⭐" },
+    { word: "EFFACE", translation: "抹去、消除", example: "He tried to <em>efface</em> all memory of his embarrassing performance.", difficulty: "⭐⭐" },
+    { word: "CHIMERA", translation: "幻想、不切實際的夢想", example: "Global peace remained a distant <em>chimera</em> to the diplomats.", difficulty: "⭐⭐" },
+    { word: "INCORRIGIBLE", translation: "屢教不改的", example: "He was an <em>incorrigible</em> optimist who never expected the worst.", difficulty: "⭐⭐" },
+    { word: "JUXTAPOSE", translation: "並列、對比", example: "The exhibition <em>juxtaposed</em> ancient artifacts with modern replicas.", difficulty: "⭐" },
+    { word: "CONVERSANT", translation: "熟悉的、精通的", example: "She was fully <em>conversant</em> with the latest legal developments.", difficulty: "⭐⭐" },
+    { word: "ESOTERIC", translation: "深奧的、只有少數人懂的", example: "The lecture was too <em>esoteric</em> for a general audience.", difficulty: "⭐⭐" },
+    { word: "AUSPICIOUS", translation: "吉祥的、有利的", example: "It was an <em>auspicious</em> beginning to what proved a remarkable career.", difficulty: "⭐⭐" },
+    { word: "ITINERANT", translation: "巡迴的、流浪的", example: "The <em>itinerant</em> worker moved from farm to farm each season.", difficulty: "⭐⭐" },
+    { word: "CULL", translation: "剔除、淘汰；精選", example: "He had to <em>cull</em> the weakest proposals from the shortlist.", difficulty: "⭐⭐" },
+    { word: "PROMULGATE", translation: "頒布、公布", example: "The committee voted to <em>promulgate</em> new safety guidelines.", difficulty: "⭐⭐⭐" },
+    { word: "GRATUITOUS", translation: "不必要的、無故的", example: "Critics condemned the film's <em>gratuitous</em> violence.", difficulty: "⭐⭐" },
+    { word: "NOMENCLATURE", translation: "命名法、術語體系", example: "Scientific <em>nomenclature</em> can be daunting for non-specialists.", difficulty: "⭐⭐" },
+    { word: "DROLL", translation: "滑稽的、奇趣的", example: "His <em>droll</em> humor left people unsure whether to laugh.", difficulty: "⭐⭐" },
+    { word: "INSATIABLE", translation: "無法滿足的、貪得無厭的", example: "Her <em>insatiable</em> curiosity drove her to read constantly.", difficulty: "⭐" },
+    { word: "BEGUILE", translation: "迷惑、欺騙；消磨時間", example: "He <em>beguiled</em> the children with stories of adventure.", difficulty: "⭐⭐" },
+    { word: "VINDICTIVE", translation: "報復心強的、懷恨的", example: "A <em>vindictive</em> colleague sabotaged her presentation.", difficulty: "⭐" },
+    { word: "REPLETE", translation: "充滿的；吃飽的", example: "The report was <em>replete</em> with statistical errors.", difficulty: "⭐⭐" },
+    { word: "PRECLUDE", translation: "阻止、排除可能性", example: "His criminal record <em>precluded</em> him from working with children.", difficulty: "⭐⭐" },
+    { word: "CASTIGATE", translation: "嚴厲批評、懲罰", example: "The editorial <em>castigated</em> the minister for his negligence.", difficulty: "⭐⭐⭐" },
+    { word: "COLLOQUIAL", translation: "口語的、非正式的", example: "The text used <em>colloquial</em> language that felt refreshingly natural.", difficulty: "⭐" },
+    { word: "OBFUSCATE", translation: "使模糊、混淆", example: "The legal language seemed designed to <em>obfuscate</em> rather than clarify.", difficulty: "⭐⭐⭐" },
+    { word: "FACILE", translation: "過於簡單的；流暢的", example: "His <em>facile</em> solution ignored the complexity of the problem.", difficulty: "⭐⭐" },
+    { word: "CONVIVIAL", translation: "歡樂的、友好的", example: "The <em>convivial</em> atmosphere made the evening unforgettable.", difficulty: "⭐⭐" },
+    { word: "ESCHEW", translation: "避開、戒絕", example: "He <em>eschewed</em> all forms of social media after the scandal.", difficulty: "⭐⭐⭐" },
+    { word: "PRODIGIOUS", translation: "驚人的、巨大的", example: "She demonstrated a <em>prodigious</em> talent for languages at an early age.", difficulty: "⭐⭐" },
+    { word: "IDIOSYNCRASY", translation: "特質、癖好", example: "Each scientist had their own <em>idiosyncrasies</em> in the laboratory.", difficulty: "⭐⭐" },
+    { word: "APPROBATION", translation: "認可、稱讚", example: "He craved his mentor's <em>approbation</em> more than any prize.", difficulty: "⭐⭐⭐" }
+  ],
+  6: [
+    { word: "LEGERDEMAIN", translation: "戲法、障眼法；詭計", example: "The budget figures involved a degree of financial <em>legerdemain</em>.", difficulty: "⭐⭐⭐" },
+    { word: "PUERILE", translation: "幼稚的、不成熟的", example: "His <em>puerile</em> jokes embarrassed everyone at the formal dinner.", difficulty: "⭐⭐" },
+    { word: "COMPLICITY", translation: "共謀、同謀", example: "She denied any <em>complicity</em> in the cover-up.", difficulty: "⭐" },
+    { word: "TRANSMUTE", translation: "轉化、變形", example: "The alchemists believed they could <em>transmute</em> lead into gold.", difficulty: "⭐⭐" },
+    { word: "ABSTRUSE", translation: "深奧難懂的", example: "The paper was too <em>abstruse</em> for anyone outside the field.", difficulty: "⭐⭐⭐" },
+    { word: "EDIFY", translation: "啟發、教化", example: "The documentary aimed to <em>edify</em> as well as entertain.", difficulty: "⭐⭐" },
+    { word: "SUPERCILIOUS", translation: "傲慢的、輕蔑的", example: "Her <em>supercilious</em> manner alienated many potential allies.", difficulty: "⭐⭐⭐" },
+    { word: "DISSEMBLE", translation: "掩飾、假裝", example: "He tried to <em>dissemble</em> his true feelings behind a forced smile.", difficulty: "⭐⭐⭐" },
+    { word: "VACUOUS", translation: "空洞的、缺乏思想的", example: "The interview revealed a surprisingly <em>vacuous</em> celebrity.", difficulty: "⭐⭐" },
+    { word: "CAPACIOUS", translation: "寬大的、容量大的", example: "She carried everything in a single <em>capacious</em> bag.", difficulty: "⭐⭐" },
+    { word: "MNEMONIC", translation: "記憶法；助記的", example: "He created a <em>mnemonic</em> to remember the order of the planets.", difficulty: "⭐" },
+    { word: "SONOROUS", translation: "洪亮的、響亮的", example: "His <em>sonorous</em> voice made the speech sound authoritative.", difficulty: "⭐⭐" },
+    { word: "ADMONISH", translation: "告誡、勸告", example: "The teacher <em>admonished</em> students to review their notes carefully.", difficulty: "⭐⭐" },
+    { word: "PARADIGM", translation: "典範、範式", example: "The internet represented a <em>paradigm</em> shift in communication.", difficulty: "⭐" },
+    { word: "CIRCUITOUS", translation: "迂迴的、曲折的", example: "He took a <em>circuitous</em> route to avoid being followed.", difficulty: "⭐⭐" },
+    { word: "VINDICATE", translation: "證明清白；維護", example: "The court ruling <em>vindicated</em> her after years of accusations.", difficulty: "⭐" },
+    { word: "BUCOLIC", translation: "田園的、鄉村的", example: "They dreamed of a <em>bucolic</em> retirement in the countryside.", difficulty: "⭐⭐⭐" },
+    { word: "OSTRACIZE", translation: "排斥、放逐", example: "He was <em>ostracized</em> by his peers after speaking out.", difficulty: "⭐⭐" },
+    { word: "PLETHORA", translation: "過多、大量", example: "A <em>plethora</em> of options made choosing harder, not easier.", difficulty: "⭐" },
+    { word: "PROCLIVITY", translation: "傾向、嗜好", example: "His <em>proclivity</em> for risk-taking eventually cost him his fortune.", difficulty: "⭐⭐⭐" },
+    { word: "COMMENSURATE", translation: "相稱的、相當的", example: "The salary should be <em>commensurate</em> with the level of experience.", difficulty: "⭐⭐" },
+    { word: "INCESSANT", translation: "不停的、連續的", example: "The <em>incessant</em> noise from the construction made concentration impossible.", difficulty: "⭐" },
+    { word: "SYCOPHANT", translation: "阿諛奉承者", example: "He surrounded himself with <em>sycophants</em> who never challenged him.", difficulty: "⭐⭐" },
+    { word: "TANGENTIAL", translation: "切線的；不重要的", example: "His comments were <em>tangential</em> to the main point of discussion.", difficulty: "⭐⭐" },
+    { word: "TENABLE", translation: "站得住腳的、合理的", example: "That position is no longer <em>tenable</em> given the new evidence.", difficulty: "⭐⭐" },
+    { word: "IMPALPABLE", translation: "無形的、難以感受的", example: "The tension between them was real but <em>impalpable</em>.", difficulty: "⭐⭐⭐" },
+    { word: "ODIOUS", translation: "可憎的、討厭的", example: "He found the task of firing staff truly <em>odious</em>.", difficulty: "⭐⭐" },
+    { word: "UBIQUITOUS", translation: "無所不在的", example: "Smartphones have become <em>ubiquitous</em> in everyday life.", difficulty: "⭐" },
+    { word: "RUMINATE", translation: "反覆思考、沉思", example: "She <em>ruminated</em> for weeks before making her decision.", difficulty: "⭐" },
+    { word: "REMUNERATION", translation: "報酬、薪酬", example: "The <em>remuneration</em> package included bonuses and stock options.", difficulty: "⭐⭐" },
+    { word: "PECCADILLO", translation: "小過失、輕微過錯", example: "The scandal turned out to be a mere <em>peccadillo</em> compared to what followed.", difficulty: "⭐⭐⭐" },
+    { word: "SUPINE", translation: "仰臥的；懶惰無為的", example: "The opposition was <em>supine</em>, offering no real challenge to the ruling party.", difficulty: "⭐⭐⭐" },
+    { word: "BANAL", translation: "平庸的、陳腐的", example: "The screenplay relied on <em>banal</em> dialogue and predictable plots.", difficulty: "⭐⭐" },
+    { word: "HETERODOX", translation: "異端的、非正統的", example: "His <em>heterodox</em> views put him at odds with mainstream economists.", difficulty: "⭐⭐⭐" },
+    { word: "GRANDILOQUENT", translation: "誇張的、浮誇的", example: "His <em>grandiloquent</em> speech hid the poverty of his ideas.", difficulty: "⭐⭐⭐" },
+    { word: "LUGUBRIOUS", translation: "悲傷的、憂鬱的", example: "The funeral march was slow and <em>lugubrious</em>.", difficulty: "⭐⭐⭐" },
+    { word: "INFINITESIMAL", translation: "無限小的、極微的", example: "The difference was <em>infinitesimal</em>, yet it mattered enormously.", difficulty: "⭐⭐" },
+    { word: "GOAD", translation: "刺激、激怒", example: "He was <em>goaded</em> into reacting by the provocative remarks.", difficulty: "⭐⭐" },
+    { word: "MALINGER", translation: "裝病、藉故逃避責任", example: "His supervisor suspected him of <em>malingering</em> to avoid the project.", difficulty: "⭐⭐⭐" },
+    { word: "AVER", translation: "斷言、確認", example: "She <em>averred</em> that she had never visited the building in question.", difficulty: "⭐⭐⭐" },
+    { word: "CACOPHONY", translation: "嘈雜聲、刺耳的聲音", example: "The market was a <em>cacophony</em> of voices, horns, and music.", difficulty: "⭐⭐" },
+    { word: "REFRACTORY", translation: "難管教的、頑固的", example: "The <em>refractory</em> child ignored every rule that was set.", difficulty: "⭐⭐⭐" },
+    { word: "ICONOCLAST", translation: "破除偶像者；反傳統者", example: "She was an <em>iconoclast</em> who challenged every accepted norm.", difficulty: "⭐⭐" },
+    { word: "ENERVATE", translation: "使衰弱、使精疲力竭", example: "The tropical heat <em>enervated</em> the entire expedition team.", difficulty: "⭐⭐⭐" },
+    { word: "LEVITY", translation: "輕浮、不莊重", example: "A touch of <em>levity</em> helped ease the tension in the room.", difficulty: "⭐⭐" },
+    { word: "EQUANIMITY", translation: "平靜、鎮定", example: "She accepted the difficult news with remarkable <em>equanimity</em>.", difficulty: "⭐⭐⭐" },
+    { word: "STRICTURE", translation: "批評；限制", example: "The review included several harsh <em>strictures</em> on the methodology.", difficulty: "⭐⭐⭐" },
+    { word: "OPULENT", translation: "富裕的、豪華的", example: "The <em>opulent</em> banquet hall dazzled every guest.", difficulty: "⭐⭐" },
+    { word: "DISPARAGE", translation: "貶低、輕視", example: "She refused to <em>disparage</em> her rivals publicly.", difficulty: "⭐⭐" },
+    { word: "DISCURSIVE", translation: "散漫的、東拉西扯的", example: "His <em>discursive</em> writing style was charming but exhausting.", difficulty: "⭐⭐⭐" }
+  ],
+  7: [
+    { word: "REDRESS", translation: "糾正、補救", example: "She sought legal <em>redress</em> for the injustice she had suffered.", difficulty: "⭐⭐" },
+    { word: "ANOMALOUS", translation: "異常的、不規則的", example: "The data showed several <em>anomalous</em> results that required explanation.", difficulty: "⭐⭐" },
+    { word: "OBSEQUIOUS", translation: "奉承的、諂媚的", example: "The <em>obsequious</em> assistant agreed with everything the boss said.", difficulty: "⭐⭐⭐" },
+    { word: "DIDACTIC", translation: "說教的；有教育性的", example: "The novel was overtly <em>didactic</em>, lecturing readers on morality.", difficulty: "⭐⭐" },
+    { word: "TRUNCATE", translation: "截斷、縮短", example: "The meeting was <em>truncated</em> due to an unexpected emergency.", difficulty: "⭐⭐" },
+    { word: "ABSTEMIOUS", translation: "節制的、禁慾的", example: "He was <em>abstemious</em> with food and drink throughout the campaign.", difficulty: "⭐⭐⭐" },
+    { word: "ETHEREAL", translation: "飄渺的、空靈的", example: "The mist gave the valley an <em>ethereal</em> beauty.", difficulty: "⭐⭐" },
+    { word: "BOMBASTIC", translation: "誇誇其談的、浮誇的", example: "His <em>bombastic</em> speech impressed few serious analysts.", difficulty: "⭐⭐" },
+    { word: "SENESCENT", translation: "衰老的、老化的", example: "The <em>senescent</em> institution needed reform to survive.", difficulty: "⭐⭐⭐" },
+    { word: "PERNICIOUS", translation: "有害的、惡性的", example: "The <em>pernicious</em> effects of misinformation spread rapidly online.", difficulty: "⭐⭐" },
+    { word: "CATHOLIC", translation: "普遍的、廣泛的", example: "She had <em>catholic</em> tastes in music, from jazz to classical.", difficulty: "⭐⭐⭐" },
+    { word: "OBJURGATION", translation: "嚴厲譴責", example: "The manager's <em>objurgation</em> silenced the entire office.", difficulty: "⭐⭐⭐" },
+    { word: "EFFUSIVE", translation: "過度表達的、熱情洋溢的", example: "Her <em>effusive</em> praise made him slightly uncomfortable.", difficulty: "⭐⭐" },
+    { word: "UMBRAGE", translation: "怨恨、不滿", example: "He took <em>umbrage</em> at the implication that he had lied.", difficulty: "⭐⭐⭐" },
+    { word: "VICISSITUDE", translation: "命運的變化、浮沉", example: "They weathered the <em>vicissitudes</em> of business together.", difficulty: "⭐⭐⭐" },
+    { word: "CONTENTIOUS", translation: "爭議性的、好爭辯的", example: "The new policy was highly <em>contentious</em> from the start.", difficulty: "⭐" },
+    { word: "OBEISANCE", translation: "尊敬的行為、鞠躬行禮", example: "The courtiers made a deep <em>obeisance</em> before the queen.", difficulty: "⭐⭐⭐" },
+    { word: "ASSIDUOUS", translation: "勤奮的、孜孜不倦的", example: "She was <em>assiduous</em> in reviewing every clause of the contract.", difficulty: "⭐⭐" },
+    { word: "DUPLICITY", translation: "欺騙、表裡不一", example: "His <em>duplicity</em> was eventually exposed by a trusted colleague.", difficulty: "⭐⭐" },
+    { word: "INSOUCIANT", translation: "漫不經心的、無憂無慮的", example: "His <em>insouciant</em> attitude to deadlines frustrated the whole team.", difficulty: "⭐⭐⭐" },
+    { word: "MYRMIDON", translation: "盲目執行命令的人", example: "He was a loyal <em>myrmidon</em>, doing whatever his superiors demanded.", difficulty: "⭐⭐⭐" },
+    { word: "NASCENT", translation: "初生的、新興的", example: "The <em>nascent</em> industry needed government support to grow.", difficulty: "⭐⭐" },
+    { word: "ACCEDE", translation: "同意、加入", example: "He finally <em>acceded</em> to their demands after weeks of resistance.", difficulty: "⭐⭐" },
+    { word: "MAGNANIMOUS", translation: "寬宏大量的", example: "In victory, she was <em>magnanimous</em> and praised her opponents.", difficulty: "⭐⭐" },
+    { word: "NONAGE", translation: "未成年；不成熟的時期", example: "The empire was still in its <em>nonage</em>, barely two decades old.", difficulty: "⭐⭐⭐" },
+    { word: "INVECTIVE", translation: "謾罵、痛罵", example: "His speech dissolved into pointless <em>invective</em>.", difficulty: "⭐⭐⭐" },
+    { word: "MACHINATION", translation: "陰謀、詭計", example: "The coup was the result of years of political <em>machination</em>.", difficulty: "⭐⭐" },
+    { word: "DOCILE", translation: "馴服的、溫順的", example: "The once-fierce dog was now entirely <em>docile</em> in old age.", difficulty: "⭐" },
+    { word: "REDOUBTABLE", translation: "令人畏懼的、強大的", example: "She was a <em>redoubtable</em> opponent in any courtroom debate.", difficulty: "⭐⭐⭐" },
+    { word: "PROGNOSTICATE", translation: "預言、預測", example: "Analysts tried to <em>prognosticate</em> the outcome of the election.", difficulty: "⭐⭐⭐" },
+    { word: "ENGENDER", translation: "引起、產生", example: "The policy <em>engendered</em> fierce debate across the country.", difficulty: "⭐⭐" },
+    { word: "FETID", translation: "發惡臭的", example: "A <em>fetid</em> smell rose from the stagnant water.", difficulty: "⭐⭐" },
+    { word: "PEDANTIC", translation: "賣弄學問的、迂腐的", example: "His <em>pedantic</em> corrections of minor errors annoyed everyone.", difficulty: "⭐⭐" },
+    { word: "CAPITULATE", translation: "投降、妥協", example: "After hours of negotiation, the union <em>capitulated</em>.", difficulty: "⭐⭐" },
+    { word: "INCHOATE", translation: "初步的、未完成的", example: "The plan was still <em>inchoate</em> and needed considerable development.", difficulty: "⭐⭐⭐" },
+    { word: "EXPONENT", translation: "倡導者；指數", example: "He was a leading <em>exponent</em> of free-market economics.", difficulty: "⭐" },
+    { word: "MENDACIOUS", translation: "說謊的、虛假的", example: "The <em>mendacious</em> report was retracted by the publication.", difficulty: "⭐⭐⭐" },
+    { word: "STRIDENT", translation: "刺耳的；強硬激烈的", example: "Her <em>strident</em> demands for change alienated potential supporters.", difficulty: "⭐⭐" },
+    { word: "OLIGARCHY", translation: "寡頭政治", example: "The country was effectively controlled by a corrupt <em>oligarchy</em>.", difficulty: "⭐⭐" },
+    { word: "REFULGENT", translation: "燦爛的、光輝的", example: "The <em>refulgent</em> dawn light flooded the valley.", difficulty: "⭐⭐⭐" },
+    { word: "NEPOTISM", translation: "任人唯親、裙帶關係", example: "He was accused of <em>nepotism</em> for promoting his nephew.", difficulty: "⭐" },
+    { word: "RIBALD", translation: "粗俗的、下流的（笑話）", example: "His <em>ribald</em> humor was not appropriate for the occasion.", difficulty: "⭐⭐" },
+    { word: "AVUNCULAR", translation: "如叔伯般和藹的", example: "The professor had an <em>avuncular</em> manner that reassured nervous students.", difficulty: "⭐⭐⭐" },
+    { word: "SUPPLICATE", translation: "懇求、祈求", example: "He <em>supplicated</em> the committee to reconsider his application.", difficulty: "⭐⭐" },
+    { word: "IRASCIBLE", translation: "急躁的、容易發怒的", example: "The <em>irascible</em> editor was feared throughout the newsroom.", difficulty: "⭐⭐" },
+    { word: "INEXORABLE", translation: "無法阻擋的、冷酷無情的", example: "The <em>inexorable</em> march of technological change left no industry untouched.", difficulty: "⭐⭐" },
+    { word: "PARVENU", translation: "暴發戶、新貴", example: "The old families looked down on the wealthy <em>parvenu</em>.", difficulty: "⭐⭐⭐" },
+    { word: "SALUBRIOUS", translation: "有益健康的、有益的", example: "The mountain air was <em>salubrious</em> after months in the polluted city.", difficulty: "⭐⭐⭐" },
+    { word: "HYPERBOLE", translation: "誇張法、誇大", example: "Calling it the best meal ever was obvious <em>hyperbole</em>.", difficulty: "⭐" },
+    { word: "SANCTIMONIOUS", translation: "假裝虔誠的、道貌岸然的", example: "His <em>sanctimonious</em> tone made the apology feel worse than none.", difficulty: "⭐⭐" }
+  ],
+  8: [
+    { word: "ALACRITY", translation: "輕快、敏捷；熱切", example: "He accepted the challenge with <em>alacrity</em>.", difficulty: "⭐⭐" },
+    { word: "OBVIATE", translation: "排除、預防", example: "Careful planning can <em>obviate</em> most foreseeable problems.", difficulty: "⭐⭐⭐" },
+    { word: "EMOLUMENT", translation: "薪酬、報酬", example: "His <em>emoluments</em> far exceeded those of his colleagues.", difficulty: "⭐⭐⭐" },
+    { word: "INTRANSIGENT", translation: "不妥協的、強硬的", example: "The <em>intransigent</em> negotiator refused all compromise.", difficulty: "⭐⭐" },
+    { word: "MORDANT", translation: "辛辣諷刺的、尖銳的", example: "Her <em>mordant</em> wit often left people unsure whether to laugh.", difficulty: "⭐⭐⭐" },
+    { word: "SAGACIOUS", translation: "睿智的、有見地的", example: "The <em>sagacious</em> investor saw opportunity where others saw risk.", difficulty: "⭐⭐" },
+    { word: "ACERBIC", translation: "尖酸刻薄的", example: "His <em>acerbic</em> reviews were feared by every filmmaker.", difficulty: "⭐⭐" },
+    { word: "VARIEGATED", translation: "多彩的、多樣的", example: "The garden was filled with <em>variegated</em> species of plants.", difficulty: "⭐⭐⭐" },
+    { word: "SUCCOR", translation: "援助、救助", example: "The charity provided <em>succor</em> to families left destitute by the floods.", difficulty: "⭐⭐⭐" },
+    { word: "IMPORTUNE", translation: "強求、不斷地煩擾", example: "He <em>importuned</em> the editor daily with requests to publish his column.", difficulty: "⭐⭐⭐" },
+    { word: "PALLIATE", translation: "緩和、減輕（症狀）", example: "The medication could only <em>palliate</em> the symptoms, not cure the disease.", difficulty: "⭐⭐⭐" },
+    { word: "WIZENED", translation: "乾癟的、萎縮的", example: "The <em>wizened</em> elder still had remarkably sharp eyes.", difficulty: "⭐⭐" },
+    { word: "CAPTIOUS", translation: "吹毛求疵的、好批評的", example: "His <em>captious</em> approach to reviewing work demoralized the team.", difficulty: "⭐⭐⭐" },
+    { word: "EMENDATION", translation: "修訂、校正", example: "The manuscript required substantial <em>emendation</em> before publication.", difficulty: "⭐⭐⭐" },
+    { word: "TRUCULENT", translation: "粗暴好鬥的、野蠻的", example: "The <em>truculent</em> defendant was warned by the judge three times.", difficulty: "⭐⭐⭐" },
+    { word: "EXPURGATE", translation: "刪除（不當內容）、淨化", example: "The editor <em>expurgated</em> several offensive passages before printing.", difficulty: "⭐⭐⭐" },
+    { word: "REPROBATE", translation: "道德敗壞者；放蕩的", example: "His uncle was considered the family <em>reprobate</em>.", difficulty: "⭐⭐" },
+    { word: "SPURIOUS", translation: "偽造的、不真實的", example: "The document was later proven to be <em>spurious</em>.", difficulty: "⭐⭐" },
+    { word: "VOLITION", translation: "意志力、自由意志", example: "She left the position of her own <em>volition</em>, without any pressure.", difficulty: "⭐⭐" },
+    { word: "INTERPOLATE", translation: "插入、插話", example: "He <em>interpolated</em> several remarks that were not in the original text.", difficulty: "⭐⭐⭐" },
+    { word: "ADDUCE", translation: "引用（作為證據）", example: "The lawyer <em>adduced</em> three key witnesses to support the case.", difficulty: "⭐⭐⭐" },
+    { word: "MISCREANT", translation: "惡棍、壞人", example: "The <em>miscreants</em> responsible were swiftly identified and arrested.", difficulty: "⭐⭐" },
+    { word: "QUIXOTIC", translation: "不切實際的、唐吉訶德式的", example: "His <em>quixotic</em> plan to sail around the world alone amused everyone.", difficulty: "⭐⭐" },
+    { word: "SUPPURATE", translation: "化膿", example: "The wound began to <em>suppurate</em> due to poor hygiene.", difficulty: "⭐⭐⭐" },
+    { word: "MARTINET", translation: "嚴格紀律者、一板一眼的人", example: "The colonel was a <em>martinet</em> who tolerated no deviation from protocol.", difficulty: "⭐⭐⭐" },
+    { word: "COMPUNCTION", translation: "悔恨、良心不安", example: "She felt no <em>compunction</em> about firing the incompetent manager.", difficulty: "⭐⭐" },
+    { word: "MERCURIAL", translation: "善變的、情緒多變的", example: "His <em>mercurial</em> temperament made working with him unpredictable.", difficulty: "⭐⭐" },
+    { word: "NOSTRUM", translation: "萬靈藥（通常指無效的）；秘方", example: "He peddled political <em>nostrums</em> instead of addressing real problems.", difficulty: "⭐⭐⭐" },
+    { word: "PROPITIATE", translation: "安撫、取悅", example: "She brought gifts in an attempt to <em>propitiate</em> the angry committee.", difficulty: "⭐⭐⭐" },
+    { word: "EFFICACY", translation: "效力、效果", example: "The clinical trial confirmed the <em>efficacy</em> of the new treatment.", difficulty: "⭐⭐" },
+    { word: "TANTAMOUNT", translation: "等同於、相當於", example: "His silence was <em>tantamount</em> to an admission of guilt.", difficulty: "⭐⭐" },
+    { word: "PARIAH", translation: "被排斥者、棄兒", example: "After the scandal, he became a social <em>pariah</em>.", difficulty: "⭐⭐" },
+    { word: "GERMANE", translation: "有關的、切題的", example: "Her comment was not <em>germane</em> to the matter being discussed.", difficulty: "⭐⭐⭐" },
+    { word: "LICENTIOUS", translation: "放蕩的、淫蕩的", example: "The novel depicted the <em>licentious</em> lifestyle of the aristocracy.", difficulty: "⭐⭐⭐" },
+    { word: "SUPERANNUATED", translation: "因年老而退休的；過時的", example: "The <em>superannuated</em> equipment badly needed replacing.", difficulty: "⭐⭐⭐" },
+    { word: "EGREGIOUS", translation: "極其惡劣的、令人髮指的", example: "The court described the conduct as an <em>egregious</em> violation of trust.", difficulty: "⭐⭐" },
+    { word: "VAPID", translation: "乏味的、空洞無聊的", example: "The conversation was <em>vapid</em> and forgettable.", difficulty: "⭐⭐" },
+    { word: "CROTCHET", translation: "怪念頭、奇特想法", example: "Everyone knew his <em>crotchets</em> and tried to accommodate them.", difficulty: "⭐⭐⭐" },
+    { word: "EPIGRAPH", translation: "題詞、碑文", example: "The chapter began with an <em>epigraph</em> from Kafka.", difficulty: "⭐⭐" },
+    { word: "EXPATIATE", translation: "詳細闡述、長篇大論", example: "Given the chance, he would <em>expatiate</em> on any topic for hours.", difficulty: "⭐⭐⭐" },
+    { word: "SINECURE", translation: "閒差事、輕鬆肥缺", example: "The advisory role was effectively a <em>sinecure</em> with little real work.", difficulty: "⭐⭐⭐" },
+    { word: "PREDILECTION", translation: "偏好、偏愛", example: "She had a <em>predilection</em> for early morning runs in the park.", difficulty: "⭐⭐" },
+    { word: "IMBROGLIO", translation: "複雜糾紛、混亂局面", example: "He found himself caught in a diplomatic <em>imbroglio</em>.", difficulty: "⭐⭐⭐" },
+    { word: "INEFFABLE", translation: "難以言表的、超越語言的", example: "She felt an <em>ineffable</em> sense of awe before the ancient ruins.", difficulty: "⭐⭐" },
+    { word: "STOLID", translation: "木訥的、感情不外露的", example: "His <em>stolid</em> demeanor concealed a sharp and observant mind.", difficulty: "⭐⭐" },
+    { word: "OFFAL", translation: "內臟（食物）；廢棄物", example: "Traditional dishes often use <em>offal</em> that other cuisines discard.", difficulty: "⭐⭐" },
+    { word: "LISSOME", translation: "柔軟靈活的", example: "The <em>lissome</em> dancer moved with effortless grace.", difficulty: "⭐⭐⭐" },
+    { word: "MELLIFLUOUS", translation: "悅耳的、甜美的（聲音）", example: "Her <em>mellifluous</em> voice was perfect for radio broadcasting.", difficulty: "⭐⭐" },
+    { word: "SURFEIT", translation: "過量、過飽", example: "A <em>surfeit</em> of praise can make an artist complacent.", difficulty: "⭐⭐" },
+    { word: "BLANDISHMENT", translation: "奉承、誘惑", example: "She resisted all their <em>blandishments</em> and kept her original position.", difficulty: "⭐⭐⭐" }
+  ],
+  9: [
+    { word: "PROLIX", translation: "囉嗦冗長的", example: "His <em>prolix</em> writing would benefit from rigorous editing.", difficulty: "⭐⭐⭐" },
+    { word: "APOCRYPHAL", translation: "來源可疑的、假託的", example: "The story of his heroism turned out to be <em>apocryphal</em>.", difficulty: "⭐⭐⭐" },
+    { word: "CUPIDITY", translation: "貪婪、貪欲", example: "Raw <em>cupidity</em> motivated the fraud from the beginning.", difficulty: "⭐⭐⭐" },
+    { word: "VERNAL", translation: "春天的、充滿青春活力的", example: "A <em>vernal</em> freshness filled the air after months of winter.", difficulty: "⭐⭐⭐" },
+    { word: "TEMERITY", translation: "鹵莽、大膽妄為", example: "He had the <em>temerity</em> to challenge the CEO in front of everyone.", difficulty: "⭐⭐⭐" },
+    { word: "RAPPROCHEMENT", translation: "（國家間的）和解、關係恢復", example: "The summit led to a gradual <em>rapprochement</em> between the two nations.", difficulty: "⭐⭐⭐" },
+    { word: "DISQUISITION", translation: "長篇論述、學術論文", example: "His <em>disquisition</em> on tax policy lasted nearly three hours.", difficulty: "⭐⭐⭐" },
+    { word: "PROSCRIBE", translation: "禁止、查禁", example: "The regime <em>proscribed</em> all opposition political parties.", difficulty: "⭐⭐" },
+    { word: "MUNIFICENCE", translation: "慷慨大方", example: "The donor's <em>munificence</em> transformed the struggling university.", difficulty: "⭐⭐⭐" },
+    { word: "PROBITY", translation: "正直、廉潔", example: "His reputation for <em>probity</em> made him the ideal candidate for the role.", difficulty: "⭐⭐⭐" },
+    { word: "PUISSANT", translation: "強大有力的", example: "The king was once the most <em>puissant</em> ruler in the region.", difficulty: "⭐⭐⭐" },
+    { word: "PECULATE", translation: "挪用公款、貪污", example: "The treasurer had been <em>peculating</em> funds for over a decade.", difficulty: "⭐⭐⭐" },
+    { word: "DIFFIDENT", translation: "缺乏自信的、羞怯的", example: "She was <em>diffident</em> in large groups but brilliant in one-on-one conversation.", difficulty: "⭐⭐" },
+    { word: "VENAL", translation: "貪腐的、受賄的", example: "The <em>venal</em> official accepted bribes without hesitation.", difficulty: "⭐⭐⭐" },
+    { word: "PARSIMONIOUS", translation: "極度節儉的、吝嗇的", example: "His <em>parsimonious</em> habits meant he rarely bought new clothes.", difficulty: "⭐⭐⭐" },
+    { word: "PUSILLANIMOUS", translation: "懦弱的、膽怯的", example: "His <em>pusillanimous</em> response to the crisis disappointed many supporters.", difficulty: "⭐⭐⭐" },
+    { word: "EXTANT", translation: "現存的、尚存的", example: "Only three <em>extant</em> copies of the manuscript are known to exist.", difficulty: "⭐⭐" },
+    { word: "MERETRICIOUS", translation: "表面華麗但低俗的", example: "The <em>meretricious</em> design attracted attention but lacked depth.", difficulty: "⭐⭐⭐" },
+    { word: "XENOPHOBIA", translation: "仇外情緒、恐外症", example: "<em>Xenophobia</em> tends to rise during periods of economic insecurity.", difficulty: "⭐" },
+    { word: "QUOTIDIAN", translation: "日常的、平凡的", example: "The novel celebrated the beauty hidden in <em>quotidian</em> moments.", difficulty: "⭐⭐⭐" },
+    { word: "EXIGENCY", translation: "緊迫需求、緊急情況", example: "The <em>exigencies</em> of war required extreme sacrifices.", difficulty: "⭐⭐⭐" },
+    { word: "PULCHRITUDE", translation: "美麗（尤指外表）", example: "The portrait captured her <em>pulchritude</em> with remarkable skill.", difficulty: "⭐⭐⭐" },
+    { word: "DENOUEMENT", translation: "（故事）結局、尾聲", example: "The <em>denouement</em> of the play surprised even critics who had seen it twice.", difficulty: "⭐⭐" },
+    { word: "FUGACIOUS", translation: "轉瞬即逝的", example: "Youth is <em>fugacious</em>; wisdom comes only with its passing.", difficulty: "⭐⭐⭐" },
+    { word: "TURBID", translation: "渾濁的；混亂的", example: "The river ran <em>turbid</em> after the heavy rains upstream.", difficulty: "⭐⭐⭐" },
+    { word: "INDEFEASIBLE", translation: "不可剝奪的、不可撤銷的", example: "Liberty was proclaimed an <em>indefeasible</em> right of all citizens.", difficulty: "⭐⭐⭐" },
+    { word: "DISINGENUOUS", translation: "不誠實的、心口不一的", example: "His apology seemed <em>disingenuous</em> given the circumstances.", difficulty: "⭐⭐" },
+    { word: "SCURRILOUS", translation: "粗俗誹謗的、中傷性的", example: "The newspaper published a <em>scurrilous</em> attack on the minister.", difficulty: "⭐⭐⭐" },
+    { word: "RECRUDESCENCE", translation: "（疾病或問題）復發、再起", example: "A <em>recrudescence</em> of violence followed the failed ceasefire.", difficulty: "⭐⭐⭐" },
+    { word: "DEFENESTRATE", translation: "將…從窗口扔出", example: "The famous <em>defenestration</em> of Prague sparked a major European conflict.", difficulty: "⭐⭐⭐" },
+    { word: "DILATORY", translation: "拖延的、耽擱的", example: "His <em>dilatory</em> tactics frustrated everyone waiting for an answer.", difficulty: "⭐⭐⭐" },
+    { word: "VILIFY", translation: "誹謗、中傷", example: "The tabloids sought to <em>vilify</em> him after the scandal.", difficulty: "⭐⭐" },
+    { word: "PHLEGMATIC", translation: "冷靜的、沉著的", example: "His <em>phlegmatic</em> response to crises earned him widespread respect.", difficulty: "⭐⭐⭐" },
+    { word: "ADVENTITIOUS", translation: "偶然的、外來的", example: "The discovery was entirely <em>adventitious</em>, not the result of planning.", difficulty: "⭐⭐⭐" },
+    { word: "DESICCATED", translation: "乾燥的、脫水的；無生氣的", example: "<em>Desiccated</em> herbs retain flavor for months.", difficulty: "⭐⭐" },
+    { word: "COMITY", translation: "禮讓、禮儀（尤指國際間）", example: "The agreement rested on a spirit of international <em>comity</em>.", difficulty: "⭐⭐⭐" },
+    { word: "SPECIOUS", translation: "似是而非的、表面合理的", example: "The argument was <em>specious</em>; it sounded convincing but was flawed.", difficulty: "⭐⭐⭐" },
+    { word: "NOISOME", translation: "惡臭的；有害的", example: "A <em>noisome</em> odor emanated from the abandoned building.", difficulty: "⭐⭐⭐" },
+    { word: "CALUMNY", translation: "誹謗、造謠中傷", example: "He sued the journalist for <em>calumny</em> after the false report.", difficulty: "⭐⭐⭐" },
+    { word: "EXCORIATE", translation: "嚴厲批評；擦傷皮膚", example: "The review <em>excoriated</em> the film for its shallow characters.", difficulty: "⭐⭐⭐" },
+    { word: "LASSITUDE", translation: "倦怠、疲乏", example: "A deep <em>lassitude</em> overcame her after the marathon negotiations.", difficulty: "⭐⭐" },
+    { word: "TRADUCE", translation: "中傷、誹謗", example: "She felt her reputation had been <em>traduced</em> by the article.", difficulty: "⭐⭐⭐" },
+    { word: "DISHABILLE", translation: "穿著隨便、衣衫不整", example: "He answered the door in a state of <em>dishabille</em>.", difficulty: "⭐⭐⭐" },
+    { word: "SATURNALIA", translation: "狂歡節、放縱的聚會", example: "The year-end party had descended into a veritable <em>saturnalia</em>.", difficulty: "⭐⭐⭐" },
+    { word: "EXTIRPATE", translation: "根除、消滅", example: "The aim was to <em>extirpate</em> corruption from the entire system.", difficulty: "⭐⭐⭐" },
+    { word: "FLAGITIOUS", translation: "罪大惡極的、極其邪惡的", example: "The <em>flagitious</em> crimes shocked even the most seasoned investigators.", difficulty: "⭐⭐⭐" },
+    { word: "PERIPATETIC", translation: "巡迴的；逍遙學派的", example: "His <em>peripatetic</em> career took him to six continents.", difficulty: "⭐⭐⭐" },
+    { word: "CACHINNATE", translation: "狂笑、大聲嘲笑", example: "He <em>cachinnated</em> loudly at the absurdity of the proposal.", difficulty: "⭐⭐⭐" },
+    { word: "MANUMIT", translation: "解放（奴隸）", example: "The law finally <em>manumitted</em> enslaved people throughout the territory.", difficulty: "⭐⭐⭐" },
+    { word: "EXPIATION", translation: "贖罪、補償", example: "He viewed his charitable work as a form of <em>expiation</em>.", difficulty: "⭐⭐⭐" }
+  ],
+  10: [
+    { word: "JEJUNE", translation: "幼稚的、缺乏實質的", example: "His <em>jejune</em> analysis impressed no one with any expertise.", difficulty: "⭐⭐⭐" },
+    { word: "PAUCITY", translation: "缺乏、稀少", example: "There was a <em>paucity</em> of reliable information about the incident.", difficulty: "⭐⭐⭐" },
+    { word: "MINATORY", translation: "威脅性的、恐嚇的", example: "He received a <em>minatory</em> letter warning him to drop the case.", difficulty: "⭐⭐⭐" },
+    { word: "PUTATIVE", translation: "假定的、公認的", example: "The <em>putative</em> author of the document was never confirmed.", difficulty: "⭐⭐⭐" },
+    { word: "LUCUBRATION", translation: "挑燈夜讀；深夜苦思的成果", example: "The treatise was clearly the product of years of solitary <em>lucubration</em>.", difficulty: "⭐⭐⭐" },
+    { word: "TROGLODYTE", translation: "穴居人；極端保守之人", example: "He dismissed the reformers as <em>troglodytes</em> resistant to all progress.", difficulty: "⭐⭐⭐" },
+    { word: "ALEATORY", translation: "依賴偶然的、隨機的", example: "The performance incorporated <em>aleatory</em> elements to create unpredictability.", difficulty: "⭐⭐⭐" },
+    { word: "FARRAGO", translation: "大雜燴、混雜物", example: "The report was a <em>farrago</em> of half-truths and speculation.", difficulty: "⭐⭐⭐" },
+    { word: "CYNOSURE", translation: "眾人注目的焦點", example: "Her entrance made her the <em>cynosure</em> of every eye in the room.", difficulty: "⭐⭐⭐" },
+    { word: "BADINAGE", translation: "玩笑話、輕鬆的戲謔", example: "The evening was filled with pleasant <em>badinage</em> over dinner.", difficulty: "⭐⭐⭐" },
+    { word: "HIERATIC", translation: "祭司的；神聖的", example: "The murals had a stiff, <em>hieratic</em> quality typical of ancient religious art.", difficulty: "⭐⭐⭐" },
+    { word: "SATURNINE", translation: "憂鬱的、陰沉的", example: "His <em>saturnine</em> expression discouraged anyone from approaching him.", difficulty: "⭐⭐⭐" },
+    { word: "EXECRATE", translation: "詛咒、痛恨", example: "The populace <em>execrated</em> the dictator for decades of cruelty.", difficulty: "⭐⭐⭐" },
+    { word: "VITIATE", translation: "損害、使無效", example: "The procedural error <em>vitiated</em> the entire contract.", difficulty: "⭐⭐⭐" },
+    { word: "VENIAL", translation: "可原諒的（小錯誤）", example: "A <em>venial</em> offense was unlikely to end his career.", difficulty: "⭐⭐⭐" },
+    { word: "RISIBLE", translation: "可笑的、滑稽的", example: "The proposal was so <em>risible</em> that even its supporters laughed.", difficulty: "⭐⭐⭐" },
+    { word: "LIONIZE", translation: "把…當英雄崇拜", example: "The media <em>lionized</em> the scientist after the breakthrough discovery.", difficulty: "⭐⭐" },
+    { word: "CONTRETEMPS", translation: "不愉快的小意外、尷尬局面", example: "A minor <em>contretemps</em> at the reception threatened to become a scandal.", difficulty: "⭐⭐⭐" },
+    { word: "RODOMONTADE", translation: "誇大自吹、空洞的吹噓", example: "His campaign speeches were mere <em>rodomontade</em>, short on substance.", difficulty: "⭐⭐⭐" },
+    { word: "HEBETUDE", translation: "遲鈍、呆滯", example: "A fog of <em>hebetude</em> descended over the students by mid-afternoon.", difficulty: "⭐⭐⭐" },
+    { word: "SANGUINE", translation: "樂觀的；血紅色的", example: "She remained <em>sanguine</em> about the project's chances despite setbacks.", difficulty: "⭐⭐" },
+    { word: "DEIPNOSOPHIST", translation: "善於餐桌清談的人", example: "He was the perfect <em>deipnosophist</em>, holding court at every dinner party.", difficulty: "⭐⭐⭐" },
+    { word: "FRANGIBLE", translation: "易碎的、脆弱的", example: "The <em>frangible</em> glass required careful packaging.", difficulty: "⭐⭐⭐" },
+    { word: "APODICTIC", translation: "不可反駁的、必然正確的", example: "He stated his conclusion in <em>apodictic</em> terms that brooked no debate.", difficulty: "⭐⭐⭐" },
+    { word: "FULMINATE", translation: "強烈譴責；突然爆發", example: "He <em>fulminated</em> against the new regulations for hours.", difficulty: "⭐⭐⭐" },
+    { word: "SCARIFY", translation: "劃破表面；嚴厲批評", example: "The critic proceeded to <em>scarify</em> the novel in a 3,000-word review.", difficulty: "⭐⭐⭐" },
+    { word: "HEBDOMADAL", translation: "每週的", example: "The <em>hebdomadal</em> meetings kept all departments aligned.", difficulty: "⭐⭐⭐" },
+    { word: "DIVAGATE", translation: "偏離、離題", example: "The lecturer tended to <em>divagate</em> into fascinating but irrelevant territory.", difficulty: "⭐⭐⭐" },
+    { word: "IATROGENIC", translation: "醫源性的（由醫療引起的）", example: "The complications were <em>iatrogenic</em>, caused by the treatment itself.", difficulty: "⭐⭐⭐" },
+    { word: "TERGIVERSATION", translation: "背叛、立場反覆；含糊其辭", example: "His constant <em>tergiversation</em> made it impossible to trust his position.", difficulty: "⭐⭐⭐" },
+    { word: "NACREOUS", translation: "珍珠般的、有虹彩光澤的", example: "The shell's <em>nacreous</em> interior shimmered in the sunlight.", difficulty: "⭐⭐⭐" },
+    { word: "FAINEANT", translation: "懶惰的、無所事事的", example: "The <em>faineant</em> heir did nothing to preserve the family business.", difficulty: "⭐⭐⭐" },
+    { word: "HISPID", translation: "有剛毛的、粗毛的", example: "The plant's <em>hispid</em> stems were unpleasant to handle.", difficulty: "⭐⭐⭐" },
+    { word: "LONGANIMITY", translation: "長久忍耐、堅忍不拔", example: "She endured the hardship with rare <em>longanimity</em>.", difficulty: "⭐⭐⭐" },
+    { word: "SCIOLIST", translation: "淺學者、一知半解的人", example: "The internet has produced countless <em>sciolists</em> confident in superficial knowledge.", difficulty: "⭐⭐⭐" },
+    { word: "PROPINQUITY", translation: "接近、鄰近；親近關係", example: "Their <em>propinquity</em> in the office led naturally to friendship.", difficulty: "⭐⭐⭐" },
+    { word: "FACTITIOUS", translation: "人為的、做作的", example: "The enthusiasm seemed <em>factitious</em>, performed rather than felt.", difficulty: "⭐⭐⭐" },
+    { word: "PLEXIFORM", translation: "網狀的、錯綜複雜的", example: "The <em>plexiform</em> bureaucracy made every simple task complicated.", difficulty: "⭐⭐⭐" },
+    { word: "SUSURRUS", translation: "輕聲低語、沙沙聲", example: "A <em>susurrus</em> of whispers ran through the assembled crowd.", difficulty: "⭐⭐⭐" },
+    { word: "TRITURATE", translation: "研磨成粉末", example: "The pharmacist would <em>triturate</em> the tablets into a fine powder.", difficulty: "⭐⭐⭐" },
+    { word: "PROTEAN", translation: "多變的、多才多藝的", example: "He was a <em>protean</em> performer, equally at home in comedy and tragedy.", difficulty: "⭐⭐⭐" },
+    { word: "CREPITATE", translation: "發出噼啪聲、碎裂聲", example: "The fire began to <em>crepitate</em> as the dry wood caught flame.", difficulty: "⭐⭐⭐" },
+    { word: "NOCTIVAGANT", translation: "夜間遊蕩的", example: "The <em>noctivagant</em> poet roamed the streets after midnight.", difficulty: "⭐⭐⭐" },
+    { word: "FULIGINOUS", translation: "煙灰色的；晦暗的", example: "The factory cast a <em>fuliginous</em> shadow over the surrounding neighborhood.", difficulty: "⭐⭐⭐" },
+    { word: "HORTATORY", translation: "鼓勵性的、勸告性的", example: "His <em>hortatory</em> speech urged the graduates to pursue their ambitions.", difficulty: "⭐⭐⭐" },
+    { word: "HELIOLATRY", translation: "太陽崇拜", example: "Ancient Egyptian religion featured prominent elements of <em>heliolatry</em>.", difficulty: "⭐⭐⭐" },
+    { word: "SCIAMACHY", translation: "與想像中的敵人戰鬥、無謂的爭鬥", example: "The debate was pure <em>sciamachy</em>, fighting over a problem that didn't exist.", difficulty: "⭐⭐⭐" },
+    { word: "GLABROUS", translation: "光滑無毛的", example: "The plant's <em>glabrous</em> leaves were striking in their smoothness.", difficulty: "⭐⭐⭐" },
+    { word: "PETTIFOGGER", translation: "雞毛蒜皮的律師；吹毛求疵者", example: "He dismissed the opposing counsel as a <em>pettifogger</em> obsessed with technicalities.", difficulty: "⭐⭐⭐" },
+    { word: "EPICENE", translation: "兩性共用的；陰柔的", example: "The fashion label offered <em>epicene</em> designs intended for all genders.", difficulty: "⭐⭐⭐" }
+  ]
+};
+
+// ============================================================
+// LEITNER SYSTEM ENGINE
+// ============================================================
+const BOX_INTERVALS = { 1: 1, 2: 2, 3: 4, 4: 7, 5: 14 };
+
+function getState() {
+  const raw = localStorage.getItem('barsky_state');
+  if (raw) return JSON.parse(raw);
+  return { cards: {}, startDate: todayStr(), currentLevel: 1, currentIndex: 0 };
+}
+
+function saveState(state) {
+  localStorage.setItem('barsky_state', JSON.stringify(state));
+}
+
+function todayStr() {
+  return new Date().toISOString().split('T')[0];
+}
+
+function daysSince(dateStr) {
+  const a = new Date(dateStr);
+  const b = new Date(todayStr());
+  return Math.floor((b - a) / 86400000);
+}
+
+function getCardId(level, index) {
+  return `L${level}_${index}`;
+}
+
+// Initialize cards for a given level
+function initLevelCards(state, level) {
+  const words = VOCAB_DATA[level];
+  words.forEach((w, i) => {
+    const id = getCardId(level, i);
+    if (!state.cards[id]) {
+      state.cards[id] = {
+        id, level, index: i,
+        box: 1,
+        nextReview: todayStr(),
+        introduced: todayStr()
+      };
+    }
+  });
+}
+
+// Get cards due today
+function getTodayCards(state) {
+  const today = todayStr();
+  return Object.values(state.cards).filter(c => c.nextReview <= today);
+}
+
+// Compute next review date
+function nextReviewDate(box) {
+  const days = BOX_INTERVALS[box] || 1;
+  const d = new Date();
+  d.setDate(d.getDate() + days);
+  return d.toISOString().split('T')[0];
+}
+
+// Answer a card
+function recordAnswer(state, cardId, correct) {
+  const card = state.cards[cardId];
+  if (!card) return;
+  if (correct) {
+    card.box = Math.min(card.box + 1, 5);
+  } else {
+    card.box = 3;
+  }
+  card.nextReview = nextReviewDate(card.box);
+  saveState(state);
+}
+
+// ============================================================
+// SESSION MANAGEMENT
+// ============================================================
+let appState = getState();
+let currentSession = null; // { cards, index, correct, wrong, sessionType }
+
+function buildTodaySessions(state) {
+  const today = todayStr();
+  const sessions = [];
+
+  // New words session — next 20 unintroduced words
+  const allLevels = [1,2,3,4,5,6,7,8,9,10];
+  const newCards = [];
+  for (const lv of allLevels) {
+    const words = VOCAB_DATA[lv];
+    for (let i = 0; i < words.length; i++) {
+      const id = getCardId(lv, i);
+      if (!state.cards[id]) {
+        newCards.push({ id, level: lv, index: i, isNew: true });
+        if (newCards.length >= 20) break;
+      }
+    }
+    if (newCards.length >= 20) break;
+  }
+
+  if (newCards.length > 0) {
+    sessions.push({
+      type: 'new',
+      name: 'New Vocabulary',
+      meta: `Level ${newCards[0].level} — ${newCards.length} new words`,
+      cards: newCards,
+      completed: isSessionDone(state, 'new_' + today)
+    });
+  }
+
+  // Review sessions — cards due today, split by box
+  const dueCards = Object.values(state.cards).filter(c => c.nextReview <= today);
+  if (dueCards.length > 0) {
+    sessions.push({
+      type: 'review',
+      name: 'Review Session',
+      meta: `${dueCards.length} card${dueCards.length > 1 ? 's' : ''} due across all boxes`,
+      cards: dueCards.map(c => ({ ...c, isNew: false })),
+      completed: isSessionDone(state, 'review_' + today)
+    });
+  }
+
+  return sessions;
+}
+
+function isSessionDone(state, key) {
+  return !!(state.completedSessions && state.completedSessions[key]);
+}
+
+function markSessionDone(state, key) {
+  if (!state.completedSessions) state.completedSessions = {};
+  state.completedSessions[key] = true;
+  saveState(state);
+}
+
+// ============================================================
+// UI RENDERING
+// ============================================================
+function updateStats(state) {
+  const counts = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+  Object.values(state.cards).forEach(c => counts[c.box]++);
+  for (let b = 1; b <= 5; b++) {
+    document.getElementById(`count-box${b}`).textContent = counts[b];
+  }
+}
+
+function renderHome() {
+  const state = appState;
+  const today = new Date();
+  const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+  document.getElementById('header-date').innerHTML =
+    `${months[today.getMonth()]} ${today.getDate()}, ${today.getFullYear()}<br>${days[today.getDay()]}`;
+
+  const hour = today.getHours();
+  const greeting = hour < 12 ? 'Good Morning, Agent.' : hour < 18 ? 'Good Afternoon, Agent.' : 'Good Evening, Agent.';
+  document.getElementById('home-greeting').textContent = greeting;
+
+  // Calculate day number
+  const startDate = new Date(state.startDate);
+  const dayNum = Math.floor((today - startDate) / 86400000) + 1;
+  document.getElementById('header-day').textContent = `Day ${dayNum}`;
+
+  updateStats(state);
+
+  const sessions = buildTodaySessions(state);
+  const list = document.getElementById('today-sessions');
+  list.innerHTML = '';
+
+  const total = sessions.reduce((sum, s) => sum + s.cards.length, 0);
+  document.getElementById('today-total').textContent = total > 0 ? `${total} cards total` : '';
+
+  if (sessions.length === 0) {
+    list.innerHTML = `<div class="empty-state">
+      ▷ NO ACTIVE OPERATIONS TODAY<br>
+      All cards reviewed. Return tomorrow for new assignments.
+    </div>`;
+    return;
+  }
+
+  sessions.forEach(s => {
+    const item = document.createElement('div');
+    item.className = `session-item ${s.type === 'new' ? 'new-words' : 'review'}${s.completed ? ' completed' : ''}`;
+    item.innerHTML = `
+      <div class="session-left">
+        <div class="session-name">${s.name}</div>
+        <div class="session-meta">${s.meta}</div>
+      </div>
+      <div class="session-right">
+        <div class="card-count-badge">${s.cards.length}</div>
+        <div class="arrow-icon">▶</div>
+      </div>
+    `;
+    if (!s.completed) {
+      item.onclick = () => startSession(s);
+    }
+    list.appendChild(item);
+  });
+}
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+// ============================================================
+// STUDY SESSION
+// ============================================================
+function startSession(session) {
+  // For new words, introduce them into state first
+  const state = appState;
+  if (session.type === 'new') {
+    session.cards.forEach(c => initCardInState(state, c.level, c.index));
+    saveState(state);
+  }
+
+  // Resolve card data
+  const resolvedCards = session.cards.map(c => {
+    const vocabWord = VOCAB_DATA[c.level][c.index];
+    const stateCard = state.cards[getCardId(c.level, c.index)];
+    return { ...vocabWord, id: getCardId(c.level, c.index), box: stateCard ? stateCard.box : 1, level: c.level, isNew: c.isNew || !stateCard };
+  });
+
+  currentSession = {
+    cards: resolvedCards,
+    index: 0,
+    correct: 0,
+    wrong: 0,
+    sessionType: session.type,
+    sessionKey: session.type + '_' + todayStr()
+  };
+
+  showScreen('study-screen');
+  document.getElementById('study-session-name').textContent =
+    session.type === 'new' ? '▶ NEW VOCABULARY' : '▶ REVIEW SESSION';
+  document.getElementById('session-complete').classList.remove('visible');
+  document.getElementById('card-scene').style.display = 'block';
+  document.getElementById('answer-row').classList.add('hidden');
+
+  renderCurrentCard();
+}
+
+function initCardInState(state, level, index) {
+  const id = getCardId(level, index);
+  if (!state.cards[id]) {
+    state.cards[id] = {
+      id, level, index,
+      box: 1,
+      nextReview: nextReviewDate(1),
+      introduced: todayStr()
+    };
+  }
+}
+
+// ============================================================
+// SPEECH SYNTHESIS
+// ============================================================
+let speechSynth = window.speechSynthesis;
+let currentWord = '';
+let currentExampleText = '';
+
+function getEnglishVoice() {
+  const voices = speechSynth.getVoices();
+  // Prefer high-quality English US voices
+  const preferred = ['Google US English', 'Alex', 'Samantha', 'Karen', 'Daniel'];
+  for (const name of preferred) {
+    const v = voices.find(v => v.name === name);
+    if (v) return v;
+  }
+  // Fallback: any en-US, then any en-
+  return voices.find(v => v.lang === 'en-US') ||
+         voices.find(v => v.lang.startsWith('en')) ||
+         null;
+}
+
+function speak(text, btnId, rate = 0.88) {
+  if (!speechSynth) return;
+  speechSynth.cancel();
+
+  const btn = document.getElementById(btnId);
+  if (btn) { btn.classList.add('speaking'); }
+
+  const utter = new SpeechSynthesisUtterance(text);
+  utter.lang = 'en-US';
+  utter.rate = rate;
+  utter.pitch = 1.0;
+
+  // Try to assign voice (voices may not be loaded yet on first call)
+  const voice = getEnglishVoice();
+  if (voice) utter.voice = voice;
+
+  utter.onend = () => { if (btn) btn.classList.remove('speaking'); };
+  utter.onerror = () => { if (btn) btn.classList.remove('speaking'); };
+
+  speechSynth.speak(utter);
+}
+
+function speakWord() {
+  if (currentWord) speak(currentWord, 'speech-btn-front', 0.82);
+}
+
+function speakExample() {
+  if (currentExampleText) speak(currentExampleText, 'speech-btn-back', 0.88);
+}
+
+// Strip HTML tags for TTS
+function stripHtml(html) {
+  const tmp = document.createElement('div');
+  tmp.innerHTML = html;
+  return tmp.textContent || tmp.innerText || '';
+}
+
+// Voices load asynchronously on some browsers
+if (speechSynth.onvoiceschanged !== undefined) {
+  speechSynth.onvoiceschanged = () => { /* voices now available */ };
+}
+
+function renderCurrentCard() {
+  if (!currentSession) return;
+  const { cards, index } = currentSession;
+
+  if (index >= cards.length) {
+    showSessionComplete();
+    return;
+  }
+
+  const card = cards[index];
+  const total = cards.length;
+  const pct = Math.round((index / total) * 100);
+
+  document.getElementById('study-counter').textContent = `${index + 1} / ${total}`;
+  document.getElementById('progress-fill').style.width = pct + '%';
+  document.getElementById('progress-text').textContent = pct + '%';
+
+  // Reset flip state
+  const flipCard = document.getElementById('flip-card');
+  flipCard.classList.remove('flipped');
+  document.getElementById('answer-row').classList.add('hidden');
+
+  // Box dot color
+  const boxColors = { 1: 'var(--box1)', 2: 'var(--box2)', 3: 'var(--box3)', 4: 'var(--box4)', 5: 'var(--box5)' };
+  const boxColor = boxColors[card.box] || boxColors[1];
+  document.getElementById('front-box-dot').style.background = boxColor;
+  document.getElementById('back-box-dot').style.background = boxColor;
+  document.getElementById('front-box-label').textContent = `BOX ${card.box}`;
+  document.getElementById('back-box-label').textContent = `BOX ${card.box}`;
+
+  document.getElementById('front-difficulty').textContent = card.difficulty;
+  document.getElementById('card-word').textContent = card.word;
+  document.getElementById('card-translation').textContent = card.translation;
+  document.getElementById('card-example').innerHTML = card.example;
+
+  // Store for speech
+  currentWord = card.word;
+  currentExampleText = stripHtml(card.example);
+
+  // Remove any lingering speaking state
+  document.getElementById('speech-btn-front').classList.remove('speaking');
+  document.getElementById('speech-btn-back').classList.remove('speaking');
+
+  // Auto-pronounce the word after a short delay
+  setTimeout(() => speakWord(), 400);
+}
+
+function flipCard() {
+  const flipCard = document.getElementById('flip-card');
+  if (!flipCard.classList.contains('flipped')) {
+    flipCard.classList.add('flipped');
+    setTimeout(() => {
+      document.getElementById('answer-row').classList.remove('hidden');
+    }, 350);
+  }
+}
+
+function answerCard(correct) {
+  if (!currentSession) return;
+  const state = appState;
+  const card = currentSession.cards[currentSession.index];
+
+  recordAnswer(state, card.id, correct);
+
+  if (correct) {
+    currentSession.correct++;
+  } else {
+    currentSession.wrong++;
+  }
+
+  currentSession.index++;
+  renderCurrentCard();
+}
+
+function showSessionComplete() {
+  document.getElementById('card-scene').style.display = 'none';
+  document.getElementById('answer-row').classList.add('hidden');
+
+  const { correct, wrong } = currentSession;
+  const total = correct + wrong;
+  const pct = total > 0 ? Math.round((correct / total) * 100) : 0;
+
+  document.getElementById('stat-correct').textContent = correct;
+  document.getElementById('stat-wrong').textContent = wrong;
+  document.getElementById('stat-accuracy').textContent = pct + '%';
+
+  const msgs = pct >= 90 ? 'Outstanding performance, Agent.' :
+    pct >= 70 ? 'Solid execution. Continue the mission.' :
+    pct >= 50 ? 'Adequate. Reinforce the weak points.' :
+    'Significant gaps identified. Redouble efforts.';
+  document.getElementById('complete-sub').textContent = msgs;
+  document.getElementById('progress-fill').style.width = '100%';
+  document.getElementById('progress-text').textContent = '100%';
+
+  markSessionDone(appState, currentSession.sessionKey);
+  document.getElementById('session-complete').classList.add('visible');
+}
+
+function goHome() {
+  if (speechSynth) speechSynth.cancel();
+  showScreen('home-screen');
+  renderHome();
+}
+
+function filterByBox(box) {
+  // Highlight box and could show filtered view — for now just flash
+  const el = document.querySelector(`.stat-box[data-box="${box}"]`);
+  el.style.transform = 'scale(1.08)';
+  setTimeout(() => el.style.transform = '', 300);
+}
+
+function confirmReset() {
+  if (confirm('RESET ALL PROGRESS?\n\nThis will permanently delete all card data, box positions, and session history. This cannot be undone.')) {
+    localStorage.removeItem('barsky_state');
+    appState = getState();
+    renderHome();
+    showToast('Protocol reset. Starting fresh, Agent.');
+  }
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+// ============================================================
+// INIT
+// ============================================================
+document.addEventListener('DOMContentLoaded', () => {
+  renderHome();
+  showScreen('home-screen');
+});
+</script>
+</body>
+</html>
