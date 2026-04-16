@@ -438,6 +438,22 @@
 
   .flip-card.flipped { transform: rotateY(180deg); }
 
+  /* Card scene fade transition when advancing to next card */
+  .card-scene.transitioning {
+    opacity: 0;
+    transform: translateY(8px);
+    transition: opacity 0.18s ease, transform 0.18s ease;
+  }
+  .card-scene.entering {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  .card-scene.entering-active {
+    opacity: 1;
+    transform: translateY(0);
+    transition: opacity 0.22s ease, transform 0.22s ease;
+  }
+
   .card-face {
     position: absolute;
     inset: 0;
@@ -1830,9 +1846,12 @@ function renderCurrentCard() {
   document.getElementById('progress-fill').style.width = pct + '%';
   document.getElementById('progress-text').textContent = pct + '%';
 
-  // Reset flip state
+  // Reset flip state and answer row (transition already disabled by answerCard when called mid-transition)
   const flipCard = document.getElementById('flip-card');
+  flipCard.style.transition = 'none';
   flipCard.classList.remove('flipped');
+  flipCard.getBoundingClientRect(); // flush
+  flipCard.style.transition = '';
   document.getElementById('answer-row').classList.add('hidden');
 
   // Box dot color
@@ -1876,15 +1895,41 @@ function answerCard(correct) {
   const card = currentSession.cards[currentSession.index];
 
   recordAnswer(state, card.id, correct);
-
-  if (correct) {
-    currentSession.correct++;
-  } else {
-    currentSession.wrong++;
-  }
-
+  if (correct) currentSession.correct++;
+  else currentSession.wrong++;
   currentSession.index++;
-  renderCurrentCard();
+
+  document.getElementById('answer-row').classList.add('hidden');
+
+  const scene = document.getElementById('card-scene');
+  const flipCard = document.getElementById('flip-card');
+
+  // Phase 1: fade out (180ms)
+  scene.classList.add('transitioning');
+
+  setTimeout(() => {
+    // Phase 2: while invisible — kill the flip transition, reset, update content
+    flipCard.style.transition = 'none';
+    flipCard.classList.remove('flipped');
+
+    renderCurrentCard(); // update DOM while card is hidden and transition-less
+
+    // Force reflow so the above changes take effect before we re-enable transitions
+    flipCard.getBoundingClientRect();
+
+    // Re-enable flip transition for next user interaction
+    flipCard.style.transition = '';
+
+    // Phase 3: fade in
+    scene.classList.remove('transitioning');
+    scene.classList.add('entering');
+    scene.getBoundingClientRect(); // reflow
+    scene.classList.remove('entering');
+    scene.classList.add('entering-active');
+
+    setTimeout(() => scene.classList.remove('entering-active'), 240);
+
+  }, 190);
 }
 
 function showSessionComplete() {
