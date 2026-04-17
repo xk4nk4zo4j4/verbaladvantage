@@ -499,11 +499,13 @@
 
   .card-word {
     font-family: 'Special Elite', serif;
-    font-size: 52px;
+    font-size: clamp(26px, 6vw, 52px);
     color: var(--gold-light);
-    line-height: 1;
+    line-height: 1.1;
     margin: auto 0;
     letter-spacing: 2px;
+    word-break: break-word;
+    overflow-wrap: break-word;
   }
 
   .card-hint {
@@ -814,11 +816,15 @@
     letter-spacing: 1px;
     color: var(--cream);
     z-index: 9999;
-    transform: translateX(120%);
+    transform: translateX(calc(100% + 60px));
     transition: transform 0.3s ease;
     max-width: 280px;
+    visibility: hidden;
   }
-  .toast.show { transform: translateX(0); }
+  .toast.show {
+    transform: translateX(0);
+    visibility: visible;
+  }
 
   /* BOX COLORS for indicators */
   .box-1 { background: var(--box1); }
@@ -1867,6 +1873,9 @@ function renderCurrentCard() {
   document.getElementById('card-translation').textContent = card.translation;
   document.getElementById('card-example').innerHTML = card.example;
 
+  // Dynamically shrink font if word is too long
+  adjustWordFontSize();
+
   // Store for speech
   currentWord = card.word;
   currentExampleText = stripHtml(card.example);
@@ -1877,6 +1886,26 @@ function renderCurrentCard() {
 
   // Auto-pronounce the word after a short delay
   setTimeout(() => speakWord(), 400);
+}
+
+function adjustWordFontSize() {
+  const el = document.getElementById('card-word');
+  const container = el.closest('.card-face');
+  if (!container) return;
+
+  // Reset to max size first
+  el.style.fontSize = '';
+
+  // Available width = container width minus 40px padding each side = 80px total
+  const available = container.clientWidth - 80;
+  if (available <= 0) return;
+
+  // Shrink until it fits, minimum 20px
+  let size = parseInt(getComputedStyle(el).fontSize);
+  while (el.scrollWidth > available && size > 20) {
+    size -= 1;
+    el.style.fontSize = size + 'px';
+  }
 }
 
 function flipCard() {
